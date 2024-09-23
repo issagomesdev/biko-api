@@ -33,7 +33,7 @@ class CategoryController extends BaseController
      */
     public function show(Category $category)
     {
-        //
+        return $this->sendResponse($category, 'Retrieved successfully.');
     }
 
     /**

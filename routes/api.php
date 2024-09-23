@@ -12,13 +12,13 @@ Route::controller(AuthController::class)->group(function(){
     Route::post('register', 'register');
     Route::post('login', 'login');
 });
+
+// categories
+Route::apiResource('categories', CategoryController::class)->except([
+    'store', 'update', 'destroy'
+]);
          
 Route::middleware('auth:sanctum')->group( function () {
-
-    // categories
-    Route::apiResource('categories', CategoryController::class)->except([
-        'store', 'update', 'destroy'
-    ]);
 
     // users
     Route::get('users/category/{id}', [UserController::class, 'usersCategory']);

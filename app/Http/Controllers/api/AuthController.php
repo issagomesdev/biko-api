@@ -37,7 +37,7 @@ class AuthController extends BaseController
             $user->categories()->attach($request->categories);
         }
         $success['token'] =  $user->createToken('MyApp')->plainTextToken;
-        $success['name'] =  $user->name;
+        $success['data'] =  $user;
    
         return $this->sendResponse($success, 'User register successfully.');
     }
@@ -52,7 +52,7 @@ class AuthController extends BaseController
         if(Auth::attempt(['email' => $request->email, 'password' => $request->password])){ 
             $user = Auth::user(); 
             $success['token'] =  $user->createToken('MyApp')->plainTextToken; 
-            $success['name'] =  $user->name;
+            $success['data'] =  $user;
    
             return $this->sendResponse($success, 'User login successfully.');
         } 

@@ -22,12 +22,13 @@ class AuthController extends BaseController
             'name' => 'required',
             'email' => 'required|email|unique:users',
             'password' => 'required',
-            'cpf' => 'required|string',
+            'cpf' => 'required|string|unique:users',
             'categories' => 'array'
         ]);
    
         if($validator->fails()){
-            return $this->sendError('Validation Error.', $validator->errors());       
+            $errors = $validator->errors()->all();
+            return $this->sendError('Falha no cadastro', $errors);       
         }
    
         $input = $request->all();
@@ -36,10 +37,10 @@ class AuthController extends BaseController
         if(count(($request->categories)) > 0) {
             $user->categories()->attach($request->categories);
         }
-        $success['token'] =  $user->createToken('MyApp')->plainTextToken;
+        $success['token'] = $user->createToken('MyApp')->plainTextToken;
         $success['data'] =  $user;
    
-        return $this->sendResponse($success, 'User register successfully.');
+        return $this->sendResponse($success, 'Cadastro realizado com sucesso!');
     }
    
     /**
@@ -54,10 +55,16 @@ class AuthController extends BaseController
             $success['token'] =  $user->createToken('MyApp')->plainTextToken; 
             $success['data'] =  $user;
    
-            return $this->sendResponse($success, 'User login successfully.');
+            return $this->sendResponse($success, 'Login realizado com sucesso!');
         } 
         else{ 
-            return $this->sendError('Unauthorised.', ['error'=>'Unauthorised']);
+            return $this->sendError('Verifique suas credenciais e tente novamente.', ['error'=>'Unauthorised']);
         } 
+    }
+
+    public function logout(){
+        auth()->user()->tokens()->delete();
+
+        return $this->sendResponse(null, 'Desconectado');
     }
 }

@@ -16,7 +16,9 @@ class PublicationController extends BaseController
      */
     public function index()
     {
-        $publications = Publication::with('author', 'categories', 'comments', 'likes')->get();
+        $publications = Publication::with('author', 'categories', 'comments', 'likes')
+        ->orderBy('created_at', 'desc')
+        ->get();
         return $this->sendResponse($publications, 'Retrieved successfully.');
     }
 

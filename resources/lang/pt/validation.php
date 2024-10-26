@@ -11,5 +11,8 @@ return [
         'name' => 'nome',
         'email' => 'e-mail',
         'cpf' => 'CPF',
+        'state' => 'estado',
+        'city' => 'cidade',
+        'neighborhood' => 'bairro',
     ],
 ];

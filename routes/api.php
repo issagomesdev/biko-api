@@ -8,19 +8,21 @@ use App\Http\Controllers\api\CategoryController;
 use App\Http\Controllers\api\PublicationController;
 use App\Http\Controllers\api\UserController;
 
-Route::controller(AuthController::class)->group(function(){
-    Route::post('register', 'register');
-    Route::post('login', 'login');
 
-    // logout
-    Route::post('logout', 'logout')->middleware('auth:sanctum');
-});
 
 // categories
 Route::apiResource('categories', CategoryController::class)->except([
     'store', 'update', 'destroy'
 ]);
-         
+
+
+// auth
+Route::controller(AuthController::class)->group(function(){
+    Route::post('register', 'register');
+    Route::post('login', 'login');
+    Route::post('logout', 'logout')->middleware('auth:sanctum');
+});
+
 Route::middleware('auth:sanctum')->group( function () {
     // users
     Route::get('users/category/{id}', [UserController::class, 'usersCategory']);

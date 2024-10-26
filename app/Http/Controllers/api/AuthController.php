@@ -23,6 +23,9 @@ class AuthController extends BaseController
             'email' => 'required|email|unique:users',
             'password' => 'required',
             'cpf' => 'required|string|unique:users',
+            'state' => 'required|string',
+            'city' => 'required|string',
+            'neighborhood' => 'required|string',
             'categories' => 'array'
         ]);
    

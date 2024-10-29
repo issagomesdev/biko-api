@@ -23,6 +23,7 @@ class Publication extends Model
     protected $fillable = [
         'title',
         'text',
+        'type',
         'user_id'
     ];
 

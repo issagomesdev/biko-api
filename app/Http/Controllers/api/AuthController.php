@@ -55,6 +55,7 @@ class AuthController extends BaseController
     {
         if(Auth::attempt(['email' => $request->email, 'password' => $request->password])){ 
             $user = Auth::user(); 
+            $user->load('categories');
             $success['token'] =  $user->createToken('MyApp')->plainTextToken; 
             $success['data'] =  $user;
    

@@ -26,11 +26,14 @@ Route::controller(AuthController::class)->group(function(){
 Route::middleware('auth:sanctum')->group( function () {
     // users
     Route::get('users/category/{id}', [UserController::class, 'usersCategory']);
+    Route::get('users/auth', [UserController::class, 'userAuth']);
     Route::apiResource('users', UserController::class)->except([
         'store', 'destroy'
     ]);
 
     // publications
-    route::get('publications/category/{id}', [PublicationController::class, 'publicationsCategory']);
-    Route::apiResource('publications', PublicationController::class);
+    route::post('publications/filter', [PublicationController::class, 'publicationsFilter']);
+    Route::apiResource('publications', PublicationController::class)->except([
+        'index'
+    ]);
 });

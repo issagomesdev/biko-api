@@ -46,6 +46,14 @@ class UserController extends BaseController
         return $this->sendResponse($user, 'Retrieved successfully.');
     }
 
+    public function userAuth(Request $request)
+    {
+        $user = $request->user();
+        $user->load('categories');
+
+        return $this->sendResponse($user, 'Retrieved successfully.');
+    }
+
     /**
      * Update the specified resource in storage.
      */

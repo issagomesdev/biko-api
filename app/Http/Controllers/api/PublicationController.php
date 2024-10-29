@@ -22,12 +22,57 @@ class PublicationController extends BaseController
         return $this->sendResponse($publications, 'Retrieved successfully.');
     }
 
-    public function publicationsCategory($id)
+    public function publicationsFilter(Request $request)
     {
-        $publications = Publication::whereHas('categories', function ($query) use ($id) {
-            $query->where('category_id', $id);
-        })->with('author', 'comments', 'likes')->get();
+        $query = Publication::with('author', 'categories', 'comments', 'likes');
 
+        if ($request->filled('search')) {
+            $search = $request->input('search');
+            $query->where(function ($q) use ($search) {
+                $q->where('title', 'LIKE', "%{$search}%")
+                  ->orWhere('text', 'LIKE', "%{$search}%");
+            });
+        }
+    
+        if ($request->filled('type')) {
+            $query->where('type', $request->input('type'));
+        }
+    
+        if ($request->filled('categories') && is_array($request->input('categories')) && count($request->input('categories')) > 0) {
+            $categories = $request->input('categories');
+            $query->whereHas('categories', function ($q) use ($categories) {
+                $q->whereIn('category_id', $categories);
+            });
+        }
+    
+        if ($request->filled('state')) {
+            $query->whereHas('author', function ($q) use ($request) {
+                $q->where('state', $request->input('state'));
+            });
+        }
+        if ($request->filled('city')) {
+            $query->whereHas('author', function ($q) use ($request) {
+                $q->where('city', $request->input('city'));
+            });
+        }
+        if ($request->filled('neighborhood')) {
+            $query->whereHas('author', function ($q) use ($request) {
+                $q->where('neighborhood', 'LIKE', "%{$request->input('neighborhood')}%");
+            });
+        }
+    
+        $orderBy = $request->input('orderBy', 'desc');
+        if ($orderBy === 'asc' || $orderBy === 'desc') {
+            $query->orderBy('created_at', $orderBy);
+        } elseif ($orderBy === 'popular') {
+            $query->withCount(['likes', 'comments'])
+                  ->orderByRaw('((likes_count + comments_count) / 2) DESC')
+                  ->orderBy('comments_count', 'DESC')
+                  ->orderBy('created_at', 'ASC');
+        }
+    
+        $publications = $query->get();
+    
         return $this->sendResponse($publications, 'Retrieved successfully.');
     }
 

@@ -76,6 +76,22 @@ class PublicationController extends BaseController
         return $this->sendResponse($publications, 'Retrieved successfully.');
     }
 
+    public function publicationLike(Publication $publication, Request $request){
+
+        $has = $publication->likes()->where('user_id', $request->user()->id)->first();
+
+        if ($has) {
+            $has->delete();
+        } else {
+            $publication->likes()->create([
+                'user_id' => $request->user()->id,
+            ]);
+        }
+
+        return $this->sendResponse($publication, 'Retrieved successfully.');
+
+    }
+
     /**
      * Store a newly created resource in storage.
      */
@@ -120,6 +136,8 @@ class PublicationController extends BaseController
      */
     public function destroy(Publication $publication)
     {
-        //
+        $publication->delete();
+
+        return $this->sendResponse([], 'Retrieved successfully.');
     }
 }

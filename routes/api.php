@@ -15,7 +15,6 @@ Route::apiResource('categories', CategoryController::class)->except([
     'store', 'update', 'destroy'
 ]);
 
-
 // auth
 Route::controller(AuthController::class)->group(function(){
     Route::post('register', 'register');
@@ -33,6 +32,7 @@ Route::middleware('auth:sanctum')->group( function () {
 
     // publications
     route::post('publications/filter', [PublicationController::class, 'publicationsFilter']);
+    route::post('publications/like/{publication}', [PublicationController::class, 'publicationLike']);
     Route::apiResource('publications', PublicationController::class)->except([
         'index'
     ]);

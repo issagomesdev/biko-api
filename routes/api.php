@@ -8,8 +8,6 @@ use App\Http\Controllers\api\CategoryController;
 use App\Http\Controllers\api\PublicationController;
 use App\Http\Controllers\api\UserController;
 
-
-
 // categories
 Route::apiResource('categories', CategoryController::class)->except([
     'store', 'update', 'destroy'

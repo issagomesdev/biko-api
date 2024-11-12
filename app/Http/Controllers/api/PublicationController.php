@@ -112,7 +112,7 @@ class PublicationController extends BaseController
      */
     public function show(Publication $publication)
     {
-        $publication->load('author', 'categories', 'comments', 'likes');
+        $publication->load('author', 'categories', 'comments.author', 'likes');
         
         return $this->sendResponse($publication, 'Retrieved successfully.');
     }

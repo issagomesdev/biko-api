@@ -19,14 +19,40 @@ class UserController extends BaseController
         return $this->sendResponse($users, 'Retrieved successfully.');
     }
 
-    public function usersCategory($id)
+    public function usersFilter(Request $request)
     {
-        $users = User::whereHas('categories', function ($query) use ($id) {
-            $query->where('category_id', $id);
-        })->with('publications')->get();
+        $query = User::with('categories');
 
+        if ($request->filled('search')) {
+            $search = $request->input('search');
+            $query->where(function ($q) use ($search) {
+                $q->where('name', 'LIKE', "%{$search}%");
+            });
+        }
+    
+        if ($request->filled('categories') && is_array($request->input('categories')) && count($request->input('categories')) > 0) {
+            $categories = $request->input('categories');
+            $query->whereHas('categories', function ($q) use ($categories) {
+                $q->whereIn('category_id', $categories);
+            });
+        } else {
+            $query->whereHas('categories');
+        }
+    
+        if ($request->filled('state')) {
+            $query->where('state', $request->input('state'));
+        }
+        if ($request->filled('city')) {
+            $query->where('city', $request->input('city'));
+        }
+        if ($request->filled('neighborhood')) {
+            $query->where('neighborhood', $request->input('neighborhood'));
+        }
+        
+        $users = $query->get();
+    
         return $this->sendResponse($users, 'Retrieved successfully.');
-    }
+    }    
 
     /**
      * Store a newly created resource in storage.

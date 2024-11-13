@@ -22,7 +22,7 @@ Route::controller(AuthController::class)->group(function(){
 
 Route::middleware('auth:sanctum')->group( function () {
     // users
-    Route::get('users/category/{id}', [UserController::class, 'usersCategory']);
+    Route::post('users/filter', [UserController::class, 'usersFilter']);
     Route::get('users/auth', [UserController::class, 'userAuth']);
     Route::apiResource('users', UserController::class)->except([
         'store', 'destroy'
@@ -31,6 +31,7 @@ Route::middleware('auth:sanctum')->group( function () {
     // publications
     route::post('publications/filter', [PublicationController::class, 'publicationsFilter']);
     route::post('publications/like/{publication}', [PublicationController::class, 'publicationLike']);
+    route::post('publications/comment/{publication}', [PublicationController::class, 'publicationComment']);
     Route::apiResource('publications', PublicationController::class)->except([
         'index'
     ]);

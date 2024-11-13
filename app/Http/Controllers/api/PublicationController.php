@@ -92,6 +92,17 @@ class PublicationController extends BaseController
 
     }
 
+    public function publicationComment(Publication $publication, Request $request){
+
+        $publication->comments()->create([
+            'user_id' => $request->user()->id,
+            'comment' => $request->comment
+        ]);
+
+        return $this->sendResponse($publication, 'Retrieved successfully.');
+
+    }
+
     /**
      * Store a newly created resource in storage.
      */

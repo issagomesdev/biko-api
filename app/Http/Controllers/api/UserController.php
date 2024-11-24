@@ -21,7 +21,7 @@ class UserController extends BaseController
 
     public function usersFilter(Request $request)
     {
-        $query = User::with('categories');
+        $query = User::with('categories', 'publications');
 
         if ($request->filled('search')) {
             $search = $request->input('search');
@@ -86,7 +86,7 @@ class UserController extends BaseController
     public function update(Request $request, User $user)
     {
         $user->update($request->all());
-        if(isset($request->categories) && count(($request->categories)) > 0) {
+        if(isset($request->categories)) {
             $user->categories()->sync($request->categories);
         }
         return $this->sendResponse($user, 'Retrieved successfully.');

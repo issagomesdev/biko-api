@@ -85,7 +85,12 @@ class UserController extends BaseController
      */
     public function update(Request $request, User $user)
     {
-        $user->update($request->all());
+
+        $data = array_filter($request->all(), function ($value) {
+            return $value !== null && $value !== '';
+        });
+
+        $user->update($data);
         if(isset($request->categories)) {
             $user->categories()->sync($request->categories);
         }

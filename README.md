@@ -1,7 +1,5 @@
 # 🛠️ Biko — Laravel API
 
-![Laravel](https://img.shields.io/badge/laravel-%23FF2D20.svg?style=for-the-badge&logo=laravel&logoColor=white) 
-
 <p align="center">
   <a href="#about">About</a> •
   <a href="#route-structure">Route Structure</a> •

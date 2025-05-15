@@ -161,7 +161,7 @@ Overview of the main project structure:
 
 ```bash
 # Clone the repository
-git clone https://github.com/seu-usuario/biko-api.git
+git clone https://github.com/issagomesdev/biko-api.git
 
 cd biko-api
 

@@ -23,6 +23,7 @@ This repository contains the **RESTful API** developed in **Laravel**, responsib
 
 🔗 The frontend interface built with Next.js is available [here](https://github.com/issagomesdev/biko).
 
+
 <h2 id="about"> 📌 About</h2>
 
 This project was developed as the final assignment for the Laboratory of Innovative Enterprises course in the Analysis and Systems Development (ADS) program at UNINASSAU. It aims to provide a practical solution connecting informal service providers with potential clients through a social platform, demonstrating the application of software development skills and innovative business concepts learned throughout the course.

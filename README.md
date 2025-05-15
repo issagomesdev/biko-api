@@ -1,32 +1,93 @@
-# 🛠️ Biko — Laravel API
+# 🛠️ Biko — Social platform for service providers and seekers (Laravel API)
 
 ![Laravel](https://img.shields.io/badge/laravel-%23FF2D20.svg?style=for-the-badge&logo=laravel&logoColor=white) 
 
+![Status](https://img.shields.io/badge/status-in_development-yellow) 
+
 <p align="center">
   <a href="#about">About</a> •
+  <a href="#roadmap">Roadmap</a> •
+  <a href="#technologies">Technologies</a> •
+  <a href="#structure">Structure</a> •
   <a href="#route-structure">Route Structure</a> •
   <a href="#models--relationships">Models & Relationships</a> •
   <a href="#getting-started">Getting Started</a> •
   <a href="#authentication-flow">Authentication Flow</a> •
   <a href="#tests">Tests</a> •
-  <a href="#references">References</a>
+  <a href="#related-projects">Related Projects</a>
 </p>
 
 **Biko** is a platform that connects clients to informal service providers, working like a social network where users can register, share their work, and interact through posts, likes and comments.
 
 This repository contains the **RESTful API** developed in **Laravel**, responsible for all backend operations.
 
-![Status](https://img.shields.io/badge/status-in_development-yellow) 
+🔗 The frontend interface built with Next.js is available [here](https://github.com/issagomesdev/biko).
 
 <h2 id="about"> 📌 About</h2>
 
-This API manages:
+This project was developed as the final assignment for the Laboratory of Innovative Enterprises course in the Analysis and Systems Development (ADS) program at UNINASSAU. It aims to provide a practical solution connecting informal service providers with potential clients through a social platform, demonstrating the application of software development skills and innovative business concepts learned throughout the course.
+
+💻 You can try the live version at [biko.byissa.tech](https://biko.byissa.tech/)
+
+<h2 id="roadmap"> 🚧 Roadmap</h2>
+
+### ✅ Implemented
 
 - Authentication and registration using Laravel Sanctum
 - User management with filtering by category and location
 - CRUD for publications
 - Like and comment system
 - Public access to service categories
+
+### 🔄 Planned
+
+- Public user profiles with posts and basic interaction history
+- Report system for inappropriate content moderation
+- Service review and rating logic
+- Notification endpoints
+- Chat/message system integration
+
+<h2 id="technologies"> 🧪 Technologies</h2>
+
+This project was built using the following technologies and tools:
+
+- [Laravel Documentation](https://laravel.com/docs)
+- [Laravel Sanctum Documentation](https://laravel.com/docs/sanctum)
+- [PHPUnit Documentation](https://phpunit.de/documentation.html)
+- [Composer Documentation](https://getcomposer.org/doc/)
+- [MySQL Documentation](https://dev.mysql.com/doc/)
+
+<h2 id="structure"> 📁 Structure</h2>
+
+Overview of the main project structure:
+
+```txt
+📂 app/
+ ┣ 📂 Http/
+ ┃ ┣ 📂 Controllers/         # API controllers for auth, users, and publications
+ ┃ ┃ ┣ 📄 AuthController.php
+ ┃ ┃ ┣ 📄 UserController.php
+ ┃ ┃ ┗ 📄 PublicationController.php
+ ┣ 📂 Models/                # Eloquent models and relationships
+ ┃ ┣ 📄 User.php
+ ┃ ┣ 📄 Publication.php
+ ┃ ┣ 📄 Category.php
+ ┃ ┣ 📄 Comment.php
+ ┃ ┗ 📄 Like.php
+
+📂 routes/
+ ┗ 📄 api.php                # API routes and route groups
+
+📂 database/
+ ┣ 📂 migrations/            # Table definitions
+ ┗ 📄 seeders/               # Optional: sample data generators
+
+📂 config/
+ ┗ 📄 sanctum.php            # Sanctum token configuration
+
+📄 .env                      # Environment variables
+📄 composer.json             # Laravel dependencies
+```
 
 <h2 id="route-structure">📁 Route Structure</h2>
 
@@ -144,10 +205,6 @@ To run tests (PHPUnit):
 php artisan test
 ```
 
-<h2 id="references">🔗 References</h2>
+<h2 id="related-projects">🔗 Related Projects</h2>
 
-- [Laravel Documentation](https://laravel.com/docs)
-- [Laravel Sanctum Documentation](https://laravel.com/docs/sanctum)
-- [PHPUnit Documentation](https://phpunit.de/documentation.html)
-- [Composer Documentation](https://getcomposer.org/doc/)
-- [MySQL Documentation](https://dev.mysql.com/doc/)
+🧱 Frontend repository [here](https://github.com/issagomesdev/biko)

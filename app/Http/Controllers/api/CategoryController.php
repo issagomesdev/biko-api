@@ -1,54 +1,72 @@
 <?php
 
-namespace App\Http\Controllers\api;
+namespace App\Http\Controllers\Api;
 
-use App\Http\Controllers\Controller;
 use App\Models\Category;
-use App\Http\Requests\StoreCategoryRequest;
-use App\Http\Requests\UpdateCategoryRequest;
-use App\Http\Controllers\api\BaseController as BaseController;
+use Illuminate\Http\JsonResponse;
+use App\Http\Resources\CategoryResource;
 
 class CategoryController extends BaseController
 {
+
     /**
-     * Display a listing of the resource.
+     * @OA\Get(
+     *     path="/categories",
+     *     tags={"Categories"},
+     *     summary="Listar categorias",
+     *     description="Retorna a lista de categorias de serviços disponíveis",
+     *
+     *     @OA\Response(
+     *         response=200,
+     *         description="Categorias listadas com sucesso"
+     *     )
+     * )
      */
-    public function index()
+    public function index(): JsonResponse
     {
         $categories = Category::all();
-    
-        return $this->sendResponse($categories, 'Retrieved successfully.');
+
+        return $this->sendResponse(
+            CategoryResource::collection($categories),
+            'Retrieved successfully.'
+        );
     }
 
-    /**
-     * Store a newly created resource in storage.
-     */
-    public function store(StoreCategoryRequest $request)
+ /**
+ * @OA\Get(
+ *     path="/categories/{category}",
+ *     tags={"Categories"},
+ *     summary="Detalhar categoria pelo slug",
+ *     description="Retorna os dados de uma categoria específica usando o slug.",
+ *
+ *     @OA\Parameter(
+ *         name="category",
+ *         in="path",
+ *         required=true,
+ *         description="Slug da categoria",
+ *         @OA\Schema(
+ *             type="string",
+ *             example="eletricista"
+ *         )
+ *     ),
+ *
+ *     @OA\Response(
+ *         response=200,
+ *         description="Categoria encontrada com sucesso",
+ *         @OA\JsonContent(ref="#/components/schemas/Category")
+ *     ),
+ *
+ *     @OA\Response(
+ *         response=404,
+ *         description="Categoria não encontrada"
+ *     )
+ * )
+ */
+    public function show(Category $category): JsonResponse
     {
-        //
-    }
-
-    /**
-     * Display the specified resource.
-     */
-    public function show(Category $category)
-    {
-        return $this->sendResponse($category, 'Retrieved successfully.');
-    }
-
-    /**
-     * Update the specified resource in storage.
-     */
-    public function update(UpdateCategoryRequest $request, Category $category)
-    {
-        //
-    }
-
-    /**
-     * Remove the specified resource from storage.
-     */
-    public function destroy(Category $category)
-    {
-        //
+        return $this->sendResponse(
+            new CategoryResource($category),
+            'Retrieved successfully.'
+        );
     }
 }

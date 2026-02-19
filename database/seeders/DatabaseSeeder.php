@@ -20,10 +20,21 @@ class DatabaseSeeder extends Seeder
         //     'email' => 'test@example.com',
         // ]);
 
+        $this->call([
+            StateSeeder::class,
+            CitySeeder::class,
+        ]);
+
         $this->call(CategorySeeder::class);
-        $this->call(UsersTableSeeder::class);
+        $this->call(UserSeeder::class);
         $this->call(PublicationSeeder::class);
+        $this->call(FollowerSeeder::class);
+        $this->call(CollectionSeeder::class);
         $this->call(LikeSeeder::class);
         $this->call(CommentSeeder::class);
+        $this->call(ReviewSeeder::class);
+        $this->call(ConversationSeeder::class);
+        $this->call(BlockSeeder::class);
+        $this->call(NotificationSeeder::class);
     }
 }

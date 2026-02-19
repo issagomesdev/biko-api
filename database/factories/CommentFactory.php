@@ -19,7 +19,7 @@ class CommentFactory extends Factory
         return [
             'comment' => $this->faker->sentence,
             'user_id' => $this->faker->numberBetween(1, 10),
-            'publication_id' => $this->faker->numberBetween(5, 99)
+            'publication_id' => $this->faker->numberBetween(5, 40),
         ];
     }
 }

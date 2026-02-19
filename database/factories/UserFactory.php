@@ -2,9 +2,10 @@
 
 namespace Database\Factories;
 
+use App\Models\City;
+use App\Models\State;
 use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Support\Facades\Hash;
-use Illuminate\Support\Str;
 
 /**
  * @extends \Illuminate\Database\Eloquent\Factories\Factory<\App\Models\User>
@@ -23,11 +24,22 @@ class UserFactory extends Factory
      */
     public function definition(): array
     {
+
+        $state = State::inRandomOrder()->first();
+
+        $city = City::where('state_id', $state->id)
+            ->inRandomOrder()
+            ->first();
+
         return [
             'name' => fake()->name(),
+            'username' => fake()->unique()->userName(),
             'email' => fake()->unique()->safeEmail(),
+            'phone' => fake()->optional(0.7)->phoneNumber(),
+            'description' => fake()->optional(0.6)->realText(150),
+            'is_private' => fake()->boolean(20),
             'password' => static::$password ??= Hash::make('password'),
-            'cpf' => $this->faker->numerify('###########')
+            'city_id' => $city->id,
         ];
     }
 

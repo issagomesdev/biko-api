@@ -2,9 +2,9 @@
 
 namespace Database\Seeders;
 
-use Illuminate\Database\Console\Seeds\WithoutModelEvents;
-use Illuminate\Database\Seeder;
 use App\Models\Category;
+use Illuminate\Database\Seeder;
+use Illuminate\Support\Str;
 
 class CategorySeeder extends Seeder
 {
@@ -13,6 +13,35 @@ class CategorySeeder extends Seeder
      */
     public function run(): void
     {
-        Category::factory()->count(29)->create();
+        $categories = [
+            'Ajudante geral',
+            'Babá',
+            'Barbeiro',
+            'Cabeleireiro',
+            'Carpinteiro',
+            'Costureira / Ajustes',
+            'Cuidador de idoso',
+            'Diarista / Limpeza',
+            'Eletricista',
+            'Encanador',
+            'Jardineiro',
+            'Lavadeira / Passadeira',
+            'Mecânico',
+            'Motorista',
+            'Pedreiro',
+            'Pintor',
+            'Personal trainer',
+            'Reforço escolar',
+            'Entregador / Motoboy',
+            'Mudança / Frete',
+        ];
+
+        foreach ($categories as $category) {
+            Category::firstOrCreate([
+                'slug' => Str::slug($category)
+            ], [
+                'name' => $category
+            ]);
+        }
     }
 }

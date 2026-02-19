@@ -18,8 +18,14 @@ class Category extends Model
     ];
 
     protected $fillable = [
-        'name'
+        'name',
+        'slug',
     ];
+
+    public function getRouteKeyName()
+    {
+        return 'slug';
+    }
 
     public function users(): BelongsToMany
     {

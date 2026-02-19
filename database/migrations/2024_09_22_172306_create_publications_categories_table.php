@@ -1,10 +1,10 @@
 <?php
 
+use App\Models\Category;
+use App\Models\Publication;
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
-use App\Models\Category;
-use App\Models\Publication;
 
 return new class extends Migration
 {

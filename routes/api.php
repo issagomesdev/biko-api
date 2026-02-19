@@ -1,38 +1,79 @@
 <?php
-  
-use Illuminate\Http\Request;
+
+use App\Http\Controllers\Api\AuthController;
+use App\Http\Controllers\Api\CategoryController;
+use App\Http\Controllers\Api\ChatController;
+use App\Http\Controllers\Api\CollectionController;
+use App\Http\Controllers\Api\NotificationController;
+use App\Http\Controllers\Api\PublicationController;
+use App\Http\Controllers\Api\ReviewController;
+use App\Http\Controllers\Api\UserController;
 use Illuminate\Support\Facades\Route;
-  
-use App\Http\Controllers\api\AuthController;
-use App\Http\Controllers\api\CategoryController;
-use App\Http\Controllers\api\PublicationController;
-use App\Http\Controllers\api\UserController;
 
 // categories
-Route::apiResource('categories', CategoryController::class)->except([
-    'store', 'update', 'destroy'
-]);
+Route::get('/categories', [CategoryController::class, 'index']);
+Route::get('/categories/{category}', [CategoryController::class, 'show']);
 
 // auth
-Route::controller(AuthController::class)->group(function(){
-    Route::post('register', 'register');
-    Route::post('login', 'login');
-    Route::post('logout', 'logout')->middleware('auth:sanctum');
-});
+Route::post('register', [AuthController::class, 'register']);
+Route::post('login', [AuthController::class, 'login']);
 
-Route::middleware('auth:sanctum')->group( function () {
+Route::post('logout', [AuthController::class, 'logout'])
+    ->middleware('auth:sanctum');
+
+// publications (public)
+Route::get('publications', [PublicationController::class, 'index']);
+
+Route::middleware('auth:sanctum')->group(function () {
     // users
-    Route::post('users/filter', [UserController::class, 'usersFilter']);
     Route::get('users/auth', [UserController::class, 'userAuth']);
-    Route::apiResource('users', UserController::class)->except([
-        'store', 'destroy'
+    Route::post('users/follow/{user}', [UserController::class, 'follow']);
+    Route::get('users/pending-followers', [UserController::class, 'pendingFollowers']);
+    Route::post('users/accept-follower/{user}', [UserController::class, 'acceptFollower']);
+    Route::post('users/reject-follower/{user}', [UserController::class, 'rejectFollower']);
+    Route::get('users/blocked', [UserController::class, 'blockedUsers']);
+    Route::delete('users/delete-account', [UserController::class, 'deleteAccount']);
+    Route::post('users/block/{user}', [UserController::class, 'block']);
+    Route::post('users/unblock/{user}', [UserController::class, 'unblock']);
+    Route::apiResource('users', UserController::class)->only([
+        'index',
+        'show',
+        'update',
     ]);
 
+    // collections
+    Route::post('collections/{collection}/publications/{publication}', [CollectionController::class, 'togglePublication']);
+    Route::apiResource('collections', CollectionController::class)->except([
+        'create',
+        'edit',
+    ]);
+
+    // notifications
+    Route::get('notifications', [NotificationController::class, 'index']);
+    Route::get('notifications/unread-count', [NotificationController::class, 'unreadCount']);
+    Route::post('notifications/read-all', [NotificationController::class, 'readAll']);
+    Route::post('notifications/{notification}/read', [NotificationController::class, 'read']);
+
+    // reviews
+    Route::get('users/{user}/reviews', [ReviewController::class, 'index']);
+    Route::post('users/{user}/reviews', [ReviewController::class, 'store']);
+    Route::post('reviews/{review}/reply', [ReviewController::class, 'reply']);
+    Route::put('reviews/{review}', [ReviewController::class, 'update']);
+    Route::delete('reviews/{review}', [ReviewController::class, 'destroy']);
+
+    // chat
+    Route::get('conversations', [ChatController::class, 'index']);
+    Route::post('conversations/{user}', [ChatController::class, 'store']);
+    Route::get('conversations/{conversation}', [ChatController::class, 'show']);
+    Route::post('conversations/{conversation}/messages', [ChatController::class, 'sendMessage']);
+    Route::post('conversations/{conversation}/read', [ChatController::class, 'markAsRead']);
+    Route::delete('messages/{message}', [ChatController::class, 'deleteMessage']);
+
     // publications
-    route::post('publications/filter', [PublicationController::class, 'publicationsFilter']);
-    route::post('publications/like/{publication}', [PublicationController::class, 'publicationLike']);
-    route::post('publications/comment/{publication}', [PublicationController::class, 'publicationComment']);
+    Route::post('publications/like/{publication}', [PublicationController::class, 'like']);
+    Route::post('publications/comment/{publication}', [PublicationController::class, 'comment']);
+    Route::delete('publications/comment/{comment}', [PublicationController::class, 'deleteComment']);
     Route::apiResource('publications', PublicationController::class)->except([
-        'index'
+        'index',
     ]);
 });

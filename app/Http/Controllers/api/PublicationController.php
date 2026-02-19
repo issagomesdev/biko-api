@@ -1,154 +1,316 @@
 <?php
 
-namespace App\Http\Controllers\api;
+namespace App\Http\Controllers\Api;
 
-use App\Http\Controllers\Controller;
+use App\Http\Requests\Comment\DeleteCommentRequest;
+use App\Http\Requests\Comment\StoreCommentRequest;
+use App\Http\Requests\Publication\FilterPublicationRequest;
+use App\Http\Requests\Publication\StorePublicationRequest;
+use App\Http\Requests\Publication\UpdatePublicationRequest;
+use App\Http\Resources\PublicationResource;
+use App\Models\Comment;
 use App\Models\Publication;
-use App\Http\Requests\StorePublicationRequest;
-use App\Http\Requests\UpdatePublicationRequest;
-use App\Http\Controllers\api\BaseController as BaseController;
-use Illuminate\Http\Request;
+use App\Services\PublicationService;
 
 class PublicationController extends BaseController
 {
+    public function __construct(
+        private readonly PublicationService $service
+    ) {}
+
     /**
-     * Display a listing of the resource.
+     * @OA\Get(
+     *     path="/publications",
+     *     summary="Listar e filtrar publicações",
+     *     tags={"Publicações"},
+     *
+     *     @OA\Parameter(name="search", in="query", required=false, @OA\Schema(type="string"), example="eletricista São Paulo", description="Pesquisa por texto, tags, categoria, cidade ou estado"),
+     *     @OA\Parameter(name="type", in="query", required=false, @OA\Schema(type="integer", enum={0, 1}), example=0),
+     *     @OA\Parameter(name="categories[]", in="query", required=false, @OA\Schema(type="array", @OA\Items(type="integer")), example={1, 2}),
+     *     @OA\Parameter(name="city_id", in="query", required=false, @OA\Schema(type="integer"), example=1),
+     *     @OA\Parameter(name="tags[]", in="query", required=false, @OA\Schema(type="array", @OA\Items(type="string"))),
+     *     @OA\Parameter(name="date", in="query", required=false, @OA\Schema(type="string", enum={"today", "last_24h", "last_7d", "last_30d"}), description="Preset ou data específica (Y-m-d)"),
+     *     @OA\Parameter(name="date_from", in="query", required=false, @OA\Schema(type="string", format="date"), description="Início do intervalo (Y-m-d)"),
+     *     @OA\Parameter(name="date_to", in="query", required=false, @OA\Schema(type="string", format="date"), description="Fim do intervalo (Y-m-d)"),
+     *     @OA\Parameter(name="orderBy", in="query", required=false, @OA\Schema(type="string", enum={"asc", "desc", "popular"}), example="desc"),
+     *     @OA\Parameter(name="per_page", in="query", required=false, @OA\Schema(type="integer"), example=20),
+     *
+     *     @OA\Response(
+     *         response=200,
+     *         description="Lista paginada de publicações",
+     *
+     *         @OA\JsonContent(
+     *             @OA\Property(property="success", type="boolean", example=true),
+     *             @OA\Property(property="data", type="array", @OA\Items(ref="#/components/schemas/Publication")),
+     *             @OA\Property(property="message", type="string")
+     *         )
+     *     ),
+     *
+     *     @OA\Response(response=422, description="Dados inválidos")
+     * )
      */
-    public function index()
+    public function index(FilterPublicationRequest $request)
     {
-        $publications = Publication::with('author', 'categories', 'comments', 'likes')
-        ->orderBy('created_at', 'desc')
-        ->get();
-        return $this->sendResponse($publications, 'Retrieved successfully.');
-    }
+        $publications = $this->service->list($request->validated(), $request->user()?->id);
 
-    public function publicationsFilter(Request $request)
-    {
-        $query = Publication::with('author', 'categories', 'comments', 'likes');
-
-        if ($request->filled('search')) {
-            $search = $request->input('search');
-            $query->where(function ($q) use ($search) {
-                $q->where('title', 'LIKE', "%{$search}%")
-                  ->orWhere('text', 'LIKE', "%{$search}%");
-            });
-        }
-    
-        if ($request->filled('type')) {
-            $query->where('type', $request->input('type'));
-        }
-    
-        if ($request->filled('categories') && is_array($request->input('categories')) && count($request->input('categories')) > 0) {
-            $categories = $request->input('categories');
-            $query->whereHas('categories', function ($q) use ($categories) {
-                $q->whereIn('category_id', $categories);
-            });
-        }
-    
-        if ($request->filled('state')) {
-            $query->whereHas('author', function ($q) use ($request) {
-                $q->where('state', $request->input('state'));
-            });
-        }
-        if ($request->filled('city')) {
-            $query->whereHas('author', function ($q) use ($request) {
-                $q->where('city', $request->input('city'));
-            });
-        }
-        if ($request->filled('neighborhood')) {
-            $query->whereHas('author', function ($q) use ($request) {
-                $q->where('neighborhood', 'LIKE', "%{$request->input('neighborhood')}%");
-            });
-        }
-    
-        $orderBy = $request->input('orderBy', 'desc');
-        if ($orderBy === 'asc' || $orderBy === 'desc') {
-            $query->orderBy('created_at', $orderBy);
-        } elseif ($orderBy === 'popular') {
-            $query->withCount(['likes', 'comments'])
-                  ->orderByRaw('((likes_count + comments_count) / 2) DESC')
-                  ->orderBy('comments_count', 'DESC')
-                  ->orderBy('created_at', 'ASC');
-        }
-    
-        $publications = $query->get();
-    
-        return $this->sendResponse($publications, 'Retrieved successfully.');
-    }
-
-    public function publicationLike(Publication $publication, Request $request){
-
-        $has = $publication->likes()->where('user_id', $request->user()->id)->first();
-
-        if ($has) {
-            $has->delete();
-        } else {
-            $publication->likes()->create([
-                'user_id' => $request->user()->id,
-            ]);
-        }
-
-        return $this->sendResponse($publication, 'Retrieved successfully.');
-
-    }
-
-    public function publicationComment(Publication $publication, Request $request){
-
-        $publication->comments()->create([
-            'user_id' => $request->user()->id,
-            'comment' => $request->comment
-        ]);
-
-        return $this->sendResponse($publication, 'Retrieved successfully.');
-
+        return $this->sendResponse(
+            PublicationResource::collection($publications)->response()->getData(true),
+            'Publicações listadas com sucesso.'
+        );
     }
 
     /**
-     * Store a newly created resource in storage.
+     * @OA\Post(
+     *     path="/publications",
+     *     summary="Criar publicação",
+     *     tags={"Publicações"},
+     *     security={{"bearerAuth":{}}},
+     *
+     *     @OA\RequestBody(
+     *         required=true,
+     *
+     *         @OA\MediaType(
+     *             mediaType="multipart/form-data",
+     *
+     *             @OA\Schema(
+     *                 required={"text", "type", "city_id"},
+     *
+     *                 @OA\Property(property="text", type="string", example="Preciso de um eletricista urgente"),
+     *                 @OA\Property(property="type", type="integer", example=0),
+     *                 @OA\Property(property="city_id", type="integer", example=1),
+     *                 @OA\Property(property="categories[]", type="array", @OA\Items(type="integer"), example={1, 3}),
+     *                 @OA\Property(property="tags[]", type="array", @OA\Items(type="string"), example={"trabalho braçal", "resultado"}),
+     *                 @OA\Property(property="mentions[]", type="array", @OA\Items(type="integer"), description="IDs dos usuários mencionados (além dos @username detectados no texto)", example={1, 5}),
+     *                 @OA\Property(property="media[]", type="array", @OA\Items(type="string", format="binary"), description="Fotos e vídeos (máx. 10 arquivos, 50MB cada). Formatos: jpeg, png, gif, webp, mp4, mov, avi, webm"),
+     *             )
+     *         )
+     *     ),
+     *
+     *     @OA\Response(response=200, description="Publicação criada com sucesso"),
+     *     @OA\Response(response=422, description="Dados inválidos")
+     * )
      */
-    public function store(Request $request)
+    public function store(StorePublicationRequest $request)
     {
-        $data = $request->all();
+        $data = $request->safe()->except('categories', 'tags', 'media', 'mentions');
         $data['user_id'] = $request->user()->id;
-        $publication = Publication::create($data);
-        if(isset($request->categories) && count(($request->categories)) > 0) {
-            $publication->categories()->attach($request->categories);
-        }
-        $publication->load('author', 'categories', 'comments', 'likes');
-        return $this->sendResponse($publication, 'Retrieved successfully.');
+
+        $publication = $this->service->create(
+            $data,
+            $request->validated('categories'),
+            $request->validated('tags'),
+            $request->file('media', []),
+            $request->validated('mentions'),
+        );
+
+        return $this->sendResponse(
+            new PublicationResource($publication),
+            'Publicação criada com sucesso.'
+        );
     }
 
     /**
-     * Display the specified resource.
+     * @OA\Get(
+     *     path="/publications/{publication}",
+     *     summary="Exibir publicação",
+     *     tags={"Publicações"},
+     *     security={{"bearerAuth":{}}},
+     *
+     *     @OA\Parameter(name="publication", in="path", required=true, @OA\Schema(type="integer")),
+     *
+     *     @OA\Response(response=200, description="Publicação encontrada"),
+     *     @OA\Response(response=404, description="Publicação não encontrada")
+     * )
      */
     public function show(Publication $publication)
     {
-        $publication->load('author', 'categories', 'comments.author', 'likes');
-        
-        return $this->sendResponse($publication, 'Retrieved successfully.');
-    }
+        $authUser = request()->user();
+        $author = $publication->load('author')->author;
 
-    /**
-     * Update the specified resource in storage.
-     */
-    public function update(Request $request, Publication $publication)
-    {
-        $publication->update($request->all());
-        if(isset($request->categories) && count(($request->categories)) > 0) {
-            $publication->categories()->sync($request->categories);
+        // Block check
+        if ($authUser && $authUser->id !== $author->id) {
+            if ($author->hasBlocked($authUser->id) || $author->isBlockedBy($authUser->id)) {
+                return $this->sendError('Publicação não encontrada.', [], 404);
+            }
         }
-        $publication->load('author', 'categories', 'comments', 'likes');
-        
-        return $this->sendResponse($publication, 'Retrieved successfully.');
+
+        if ($author->is_private) {
+            $isOwner = $authUser && $authUser->id === $author->id;
+            $isFollower = $authUser && $author->isFollowedBy($authUser->id);
+
+            if (! $isOwner && ! $isFollower) {
+                return $this->sendError('Publicação não encontrada.', [], 404);
+            }
+        }
+
+        $publication = $this->service->findWithRelations($publication);
+
+        return $this->sendResponse(
+            new PublicationResource($publication),
+            'Publicação encontrada.'
+        );
     }
 
     /**
-     * Remove the specified resource from storage.
+     * @OA\Post(
+     *     path="/publications/{publication}",
+     *     summary="Atualizar publicação (usar _method=PUT)",
+     *     tags={"Publicações"},
+     *     security={{"bearerAuth":{}}},
+     *
+     *     @OA\Parameter(name="publication", in="path", required=true, @OA\Schema(type="integer")),
+     *
+     *     @OA\RequestBody(
+     *
+     *         @OA\MediaType(
+     *             mediaType="multipart/form-data",
+     *
+     *             @OA\Schema(
+     *                 required={"_method"},
+     *
+     *                 @OA\Property(property="_method", type="string", example="PUT", description="Spoofing de método HTTP"),
+     *                 @OA\Property(property="text", type="string", example="Texto atualizado da publicação"),
+     *                 @OA\Property(property="type", type="integer", example=0),
+     *                 @OA\Property(property="city_id", type="integer", example=1),
+     *                 @OA\Property(property="categories[]", type="array", @OA\Items(type="integer"), example={1, 3}),
+     *                 @OA\Property(property="tags[]", type="array", @OA\Items(type="string"), example={"urgente"}),
+     *                 @OA\Property(property="mentions[]", type="array", @OA\Items(type="integer"), description="IDs dos usuários mencionados (além dos @username detectados no texto)", example={1, 5}),
+     *                 @OA\Property(property="media[]", type="array", @OA\Items(type="string", format="binary"), description="Novas fotos/vídeos para adicionar (máx. 50MB cada)"),
+     *                 @OA\Property(property="remove_media[]", type="array", @OA\Items(type="integer"), description="IDs das mídias a remover", example={1, 3}),
+     *             )
+     *         )
+     *     ),
+     *
+     *     @OA\Response(response=200, description="Publicação atualizada com sucesso"),
+     *     @OA\Response(response=403, description="Não autorizado"),
+     *     @OA\Response(response=422, description="Dados inválidos")
+     * )
+     */
+    public function update(UpdatePublicationRequest $request, Publication $publication)
+    {
+        $data = $request->safe()->except('categories', 'tags', 'media', 'remove_media', 'mentions');
+
+        $publication = $this->service->update(
+            $publication,
+            $data,
+            $request->validated('categories'),
+            $request->validated('tags'),
+            $request->file('media', []),
+            $request->validated('remove_media', []),
+            $request->validated('mentions'),
+        );
+
+        return $this->sendResponse(
+            new PublicationResource($publication),
+            'Publicação atualizada com sucesso.'
+        );
+    }
+
+    /**
+     * @OA\Delete(
+     *     path="/publications/{publication}",
+     *     summary="Deletar publicação",
+     *     tags={"Publicações"},
+     *     security={{"bearerAuth":{}}},
+     *
+     *     @OA\Parameter(name="publication", in="path", required=true, @OA\Schema(type="integer")),
+     *
+     *     @OA\Response(response=200, description="Publicação deletada com sucesso"),
+     *     @OA\Response(response=404, description="Publicação não encontrada")
+     * )
      */
     public function destroy(Publication $publication)
     {
-        $publication->delete();
+        $this->service->delete($publication);
 
-        return $this->sendResponse([], 'Retrieved successfully.');
+        return $this->sendResponse([], 'Publicação deletada com sucesso.');
+    }
+
+    /**
+     * @OA\Post(
+     *     path="/publications/like/{publication}",
+     *     summary="Curtir/descurtir publicação",
+     *     tags={"Publicações"},
+     *     security={{"bearerAuth":{}}},
+     *
+     *     @OA\Parameter(name="publication", in="path", required=true, @OA\Schema(type="integer")),
+     *
+     *     @OA\Response(response=200, description="Like alterado com sucesso")
+     * )
+     */
+    public function like(Publication $publication)
+    {
+        $liked = $this->service->toggleLike($publication, request()->user()->id);
+
+        return $this->sendResponse(
+            ['liked' => $liked],
+            $liked ? 'Like adicionado.' : 'Like removido.'
+        );
+    }
+
+    /**
+     * @OA\Post(
+     *     path="/publications/comment/{publication}",
+     *     summary="Comentar publicação",
+     *     tags={"Publicações"},
+     *     security={{"bearerAuth":{}}},
+     *
+     *     @OA\Parameter(name="publication", in="path", required=true, @OA\Schema(type="integer")),
+     *
+     *     @OA\RequestBody(
+     *         required=true,
+     *
+     *         @OA\MediaType(
+     *             mediaType="multipart/form-data",
+     *
+     *             @OA\Schema(
+     *                 required={"comment"},
+     *
+     *                 @OA\Property(property="comment", type="string", example="Ótimo serviço!"),
+     *                 @OA\Property(property="parent_id", type="integer", nullable=true, description="ID do comentário pai (para replies)"),
+     *                 @OA\Property(property="media[]", type="array", @OA\Items(type="string", format="binary"), description="Fotos e vídeos (máx. 5 arquivos, 50MB cada)"),
+     *             )
+     *         )
+     *     ),
+     *
+     *     @OA\Response(response=200, description="Comentário adicionado"),
+     *     @OA\Response(response=422, description="Dados inválidos")
+     * )
+     */
+    public function comment(StoreCommentRequest $request, Publication $publication)
+    {
+        $publication = $this->service->addComment(
+            $publication,
+            $request->user()->id,
+            $request->validated('comment'),
+            $request->file('media', []),
+            $request->validated('parent_id'),
+        );
+
+        return $this->sendResponse(
+            new PublicationResource($publication),
+            'Comentário adicionado com sucesso.'
+        );
+    }
+
+    /**
+     * @OA\Delete(
+     *     path="/publications/comment/{comment}",
+     *     summary="Deletar comentário",
+     *     tags={"Publicações"},
+     *     security={{"bearerAuth":{}}},
+     *
+     *     @OA\Parameter(name="comment", in="path", required=true, @OA\Schema(type="integer")),
+     *
+     *     @OA\Response(response=200, description="Comentário deletado com sucesso"),
+     *     @OA\Response(response=403, description="Não autorizado"),
+     *     @OA\Response(response=404, description="Comentário não encontrado")
+     * )
+     */
+    public function deleteComment(DeleteCommentRequest $request, Comment $comment)
+    {
+        $this->service->deleteComment($comment);
+
+        return $this->sendResponse([], 'Comentário deletado com sucesso.');
     }
 }

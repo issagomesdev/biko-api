@@ -1,0 +1,1563 @@
+{
+    "openapi": "3.0.0",
+    "info": {
+        "title": "BIKO API",
+        "description": "API para gerenciamento de usuários, categorias e publicações",
+        "version": "1.0.0"
+    },
+    "servers": [
+        {
+            "url": "http://biko-api.test/api",
+            "description": "Servidor da API"
+        },
+        {
+            "url": "/api"
+        }
+    ],
+    "paths": {
+        "/register": {
+            "post": {
+                "tags": [
+                    "Auth"
+                ],
+                "summary": "Cadastrar novo usuário",
+                "description": "Cria um novo usuário e retorna token de autenticação",
+                "operationId": "5d4fa5d5607ed675ba93907e1fc94534",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "name",
+                                    "email",
+                                    "password",
+                                    "city_id"
+                                ],
+                                "properties": {
+                                    "name": {
+                                        "type": "string",
+                                        "example": "Fulano de tal"
+                                    },
+                                    "email": {
+                                        "type": "string",
+                                        "format": "email",
+                                        "example": "fulano@email.com"
+                                    },
+                                    "password": {
+                                        "type": "string",
+                                        "format": "password",
+                                        "example": "12345678"
+                                    },
+                                    "city_id": {
+                                        "description": "ID da cidade (cities.id)",
+                                        "type": "integer",
+                                        "example": 10
+                                    },
+                                    "categories": {
+                                        "type": "array",
+                                        "items": {
+                                            "type": "integer"
+                                        },
+                                        "example": [
+                                            1,
+                                            2,
+                                            3
+                                        ]
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Cadastro realizado com sucesso",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string"
+                                        },
+                                        "data": {
+                                            "properties": {
+                                                "token": {
+                                                    "type": "string"
+                                                },
+                                                "data": {
+                                                    "type": "object"
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Erro de validação"
+                    }
+                }
+            }
+        },
+        "/login": {
+            "post": {
+                "tags": [
+                    "Auth"
+                ],
+                "summary": "Autenticar usuário",
+                "description": "Realiza login e retorna token de autenticação",
+                "operationId": "67d6d0fdd54fba132e1b6f55ca254183",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "email",
+                                    "password"
+                                ],
+                                "properties": {
+                                    "email": {
+                                        "type": "string",
+                                        "format": "email",
+                                        "example": "fulano@email.com"
+                                    },
+                                    "password": {
+                                        "type": "string",
+                                        "format": "password",
+                                        "example": "12345678"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Login realizado com sucesso"
+                    },
+                    "401": {
+                        "description": "Credenciais inválidas"
+                    }
+                }
+            }
+        },
+        "/logout": {
+            "post": {
+                "tags": [
+                    "Auth"
+                ],
+                "summary": "Logout do usuário autenticado",
+                "description": "Invalida o token atual do usuário",
+                "operationId": "28d48c13fca984400ac8de99f54ee13a",
+                "responses": {
+                    "200": {
+                        "description": "Logout realizado com sucesso"
+                    },
+                    "401": {
+                        "description": "Não autenticado"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/categories": {
+            "get": {
+                "tags": [
+                    "Categories"
+                ],
+                "summary": "Listar categorias",
+                "description": "Retorna a lista de categorias de serviços disponíveis",
+                "operationId": "b1b247b2b491b0491c3c728dc33f23f0",
+                "responses": {
+                    "200": {
+                        "description": "Categorias listadas com sucesso"
+                    }
+                }
+            }
+        },
+        "/categories/{category}": {
+            "get": {
+                "tags": [
+                    "Categories"
+                ],
+                "summary": "Detalhar categoria pelo slug",
+                "description": "Retorna os dados de uma categoria específica usando o slug.",
+                "operationId": "f9287689f645443ba435d93df47f30ab",
+                "parameters": [
+                    {
+                        "name": "category",
+                        "in": "path",
+                        "description": "Slug da categoria",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "example": "eletricista"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Categoria encontrada com sucesso",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Category"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Categoria não encontrada"
+                    }
+                }
+            }
+        },
+        "/collections": {
+            "get": {
+                "tags": [
+                    "Coleções"
+                ],
+                "summary": "Listar coleções do usuário autenticado",
+                "operationId": "d4df76267f6c624eb9f318b4e6e0f312",
+                "responses": {
+                    "200": {
+                        "description": "Lista de coleções",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/components/schemas/Collection"
+                                            }
+                                        },
+                                        "message": {
+                                            "type": "string"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "post": {
+                "tags": [
+                    "Coleções"
+                ],
+                "summary": "Criar coleção",
+                "operationId": "e14763de4129762a96fd54451189b049",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "name"
+                                ],
+                                "properties": {
+                                    "name": {
+                                        "type": "string",
+                                        "example": "Eletricistas"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Coleção criada com sucesso"
+                    },
+                    "422": {
+                        "description": "Dados inválidos"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/collections/{collection}": {
+            "get": {
+                "tags": [
+                    "Coleções"
+                ],
+                "summary": "Exibir coleção com publicações",
+                "operationId": "53eb5876f82ae6d63b50ede5620f99e6",
+                "parameters": [
+                    {
+                        "name": "collection",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Coleção encontrada"
+                    },
+                    "404": {
+                        "description": "Coleção não encontrada"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "put": {
+                "tags": [
+                    "Coleções"
+                ],
+                "summary": "Renomear coleção",
+                "operationId": "9d51d8672715bd32c0232c1455fcbb37",
+                "parameters": [
+                    {
+                        "name": "collection",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "name"
+                                ],
+                                "properties": {
+                                    "name": {
+                                        "type": "string",
+                                        "example": "Favoritos"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Coleção atualizada com sucesso"
+                    },
+                    "403": {
+                        "description": "Não autorizado (coleção padrão não pode ser renomeada)"
+                    },
+                    "422": {
+                        "description": "Dados inválidos"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "delete": {
+                "tags": [
+                    "Coleções"
+                ],
+                "summary": "Deletar coleção",
+                "operationId": "466d29c63d3de005fe2ea36d32bd6b3b",
+                "parameters": [
+                    {
+                        "name": "collection",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Coleção deletada com sucesso"
+                    },
+                    "403": {
+                        "description": "Não autorizado (coleção padrão não pode ser deletada)"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/collections/{collection}/publications/{publication}": {
+            "post": {
+                "tags": [
+                    "Coleções"
+                ],
+                "summary": "Salvar/remover publicação da coleção (toggle)",
+                "operationId": "b564631f0785893109ee2764315ef871",
+                "parameters": [
+                    {
+                        "name": "collection",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "publication",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Publicação salva/removida da coleção"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/publications": {
+            "get": {
+                "tags": [
+                    "Publicações"
+                ],
+                "summary": "Listar e filtrar publicações",
+                "operationId": "1f3de545e28397584eb6544abf44a522",
+                "parameters": [
+                    {
+                        "name": "search",
+                        "in": "query",
+                        "description": "Pesquisa por texto, tags, categoria, cidade ou estado",
+                        "required": false,
+                        "schema": {
+                            "type": "string"
+                        },
+                        "example": "eletricista São Paulo"
+                    },
+                    {
+                        "name": "type",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "integer",
+                            "enum": [
+                                0,
+                                1
+                            ]
+                        },
+                        "example": 0
+                    },
+                    {
+                        "name": "categories[]",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "type": "integer"
+                            }
+                        },
+                        "example": [
+                            1,
+                            2
+                        ]
+                    },
+                    {
+                        "name": "city_id",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "integer"
+                        },
+                        "example": 1
+                    },
+                    {
+                        "name": "tags[]",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    {
+                        "name": "date",
+                        "in": "query",
+                        "description": "Preset ou data específica (Y-m-d)",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "enum": [
+                                "today",
+                                "last_24h",
+                                "last_7d",
+                                "last_30d"
+                            ]
+                        }
+                    },
+                    {
+                        "name": "date_from",
+                        "in": "query",
+                        "description": "Início do intervalo (Y-m-d)",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "format": "date"
+                        }
+                    },
+                    {
+                        "name": "date_to",
+                        "in": "query",
+                        "description": "Fim do intervalo (Y-m-d)",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "format": "date"
+                        }
+                    },
+                    {
+                        "name": "orderBy",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "enum": [
+                                "asc",
+                                "desc",
+                                "popular"
+                            ]
+                        },
+                        "example": "desc"
+                    },
+                    {
+                        "name": "per_page",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "integer"
+                        },
+                        "example": 20
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Lista paginada de publicações",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/components/schemas/Publication"
+                                            }
+                                        },
+                                        "message": {
+                                            "type": "string"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Dados inválidos"
+                    }
+                }
+            },
+            "post": {
+                "tags": [
+                    "Publicações"
+                ],
+                "summary": "Criar publicação",
+                "operationId": "94c80d0af54f450681429986276db557",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "multipart/form-data": {
+                            "schema": {
+                                "required": [
+                                    "text",
+                                    "type",
+                                    "city_id"
+                                ],
+                                "properties": {
+                                    "text": {
+                                        "type": "string",
+                                        "example": "Preciso de um eletricista urgente"
+                                    },
+                                    "type": {
+                                        "type": "integer",
+                                        "example": 0
+                                    },
+                                    "city_id": {
+                                        "type": "integer",
+                                        "example": 1
+                                    },
+                                    "categories[]": {
+                                        "type": "array",
+                                        "items": {
+                                            "type": "integer"
+                                        },
+                                        "example": [
+                                            1,
+                                            3
+                                        ]
+                                    },
+                                    "tags[]": {
+                                        "type": "array",
+                                        "items": {
+                                            "type": "string"
+                                        },
+                                        "example": [
+                                            "trabalho braçal",
+                                            "resultado"
+                                        ]
+                                    },
+                                    "media[]": {
+                                        "description": "Fotos e vídeos (máx. 10 arquivos, 50MB cada). Formatos: jpeg, png, gif, webp, mp4, mov, avi, webm",
+                                        "type": "array",
+                                        "items": {
+                                            "type": "string",
+                                            "format": "binary"
+                                        }
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Publicação criada com sucesso"
+                    },
+                    "422": {
+                        "description": "Dados inválidos"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/publications/{publication}": {
+            "get": {
+                "tags": [
+                    "Publicações"
+                ],
+                "summary": "Exibir publicação",
+                "operationId": "d27523e1b25c82a01fbfbd2911c7d43d",
+                "parameters": [
+                    {
+                        "name": "publication",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Publicação encontrada"
+                    },
+                    "404": {
+                        "description": "Publicação não encontrada"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "post": {
+                "tags": [
+                    "Publicações"
+                ],
+                "summary": "Atualizar publicação (usar _method=PUT)",
+                "operationId": "ce3c698179df6ae4fa50a9485ae2fcdc",
+                "parameters": [
+                    {
+                        "name": "publication",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "content": {
+                        "multipart/form-data": {
+                            "schema": {
+                                "required": [
+                                    "_method"
+                                ],
+                                "properties": {
+                                    "_method": {
+                                        "description": "Spoofing de método HTTP",
+                                        "type": "string",
+                                        "example": "PUT"
+                                    },
+                                    "text": {
+                                        "type": "string",
+                                        "example": "Texto atualizado da publicação"
+                                    },
+                                    "type": {
+                                        "type": "integer",
+                                        "example": 0
+                                    },
+                                    "city_id": {
+                                        "type": "integer",
+                                        "example": 1
+                                    },
+                                    "categories[]": {
+                                        "type": "array",
+                                        "items": {
+                                            "type": "integer"
+                                        },
+                                        "example": [
+                                            1,
+                                            3
+                                        ]
+                                    },
+                                    "tags[]": {
+                                        "type": "array",
+                                        "items": {
+                                            "type": "string"
+                                        },
+                                        "example": [
+                                            "urgente"
+                                        ]
+                                    },
+                                    "media[]": {
+                                        "description": "Novas fotos/vídeos para adicionar (máx. 50MB cada)",
+                                        "type": "array",
+                                        "items": {
+                                            "type": "string",
+                                            "format": "binary"
+                                        }
+                                    },
+                                    "remove_media[]": {
+                                        "description": "IDs das mídias a remover",
+                                        "type": "array",
+                                        "items": {
+                                            "type": "integer"
+                                        },
+                                        "example": [
+                                            1,
+                                            3
+                                        ]
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Publicação atualizada com sucesso"
+                    },
+                    "403": {
+                        "description": "Não autorizado"
+                    },
+                    "422": {
+                        "description": "Dados inválidos"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "delete": {
+                "tags": [
+                    "Publicações"
+                ],
+                "summary": "Deletar publicação",
+                "operationId": "fe992708cf6922b14922fce609b88824",
+                "parameters": [
+                    {
+                        "name": "publication",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Publicação deletada com sucesso"
+                    },
+                    "404": {
+                        "description": "Publicação não encontrada"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/publications/like/{publication}": {
+            "post": {
+                "tags": [
+                    "Publicações"
+                ],
+                "summary": "Curtir/descurtir publicação",
+                "operationId": "8f9ddcde94fb39fffc87408aae1d5c08",
+                "parameters": [
+                    {
+                        "name": "publication",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Like alterado com sucesso"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/publications/comment/{publication}": {
+            "post": {
+                "tags": [
+                    "Publicações"
+                ],
+                "summary": "Comentar publicação",
+                "operationId": "2364100a3fc01d7121f04d77780787e8",
+                "parameters": [
+                    {
+                        "name": "publication",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "multipart/form-data": {
+                            "schema": {
+                                "required": [
+                                    "comment"
+                                ],
+                                "properties": {
+                                    "comment": {
+                                        "type": "string",
+                                        "example": "Ótimo serviço!"
+                                    },
+                                    "media[]": {
+                                        "description": "Fotos e vídeos (máx. 5 arquivos, 50MB cada)",
+                                        "type": "array",
+                                        "items": {
+                                            "type": "string",
+                                            "format": "binary"
+                                        }
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Comentário adicionado"
+                    },
+                    "422": {
+                        "description": "Dados inválidos"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/publications/comment/{comment}": {
+            "delete": {
+                "tags": [
+                    "Publicações"
+                ],
+                "summary": "Deletar comentário",
+                "operationId": "c4d517bb6eb704e1b47f109f4757a4da",
+                "parameters": [
+                    {
+                        "name": "comment",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Comentário deletado com sucesso"
+                    },
+                    "403": {
+                        "description": "Não autorizado"
+                    },
+                    "404": {
+                        "description": "Comentário não encontrado"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/users": {
+            "get": {
+                "tags": [
+                    "Usuários"
+                ],
+                "summary": "Listar e filtrar usuários",
+                "operationId": "7208c29037df2b8bb02499ba39ed8a78",
+                "parameters": [
+                    {
+                        "name": "search",
+                        "in": "query",
+                        "description": "Pesquisa por nome, categoria, cidade ou estado",
+                        "required": false,
+                        "schema": {
+                            "type": "string"
+                        },
+                        "example": "eletricista São Paulo"
+                    },
+                    {
+                        "name": "categories[]",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "type": "integer"
+                            }
+                        },
+                        "example": [
+                            1,
+                            2
+                        ]
+                    },
+                    {
+                        "name": "city_id",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "integer"
+                        },
+                        "example": 1
+                    },
+                    {
+                        "name": "orderBy",
+                        "in": "query",
+                        "description": "Ordenação: popular (mais seguidores, padrão), desc (mais recentes), asc (mais antigos)",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "enum": [
+                                "popular",
+                                "desc",
+                                "asc"
+                            ]
+                        },
+                        "example": "popular"
+                    },
+                    {
+                        "name": "per_page",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "integer"
+                        },
+                        "example": 20
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Lista paginada de usuários",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/components/schemas/User"
+                                            }
+                                        },
+                                        "message": {
+                                            "type": "string"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Dados inválidos"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/users/{user}": {
+            "get": {
+                "tags": [
+                    "Usuários"
+                ],
+                "summary": "Exibir usuário",
+                "operationId": "a8a7a1f979a2abb839b4b320238106fc",
+                "parameters": [
+                    {
+                        "name": "user",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Usuário encontrado"
+                    },
+                    "404": {
+                        "description": "Usuário não encontrado"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "post": {
+                "tags": [
+                    "Usuários"
+                ],
+                "summary": "Atualizar usuário (usar _method=PUT)",
+                "operationId": "bbef8ad409ec475d15a8898bf02b1657",
+                "parameters": [
+                    {
+                        "name": "user",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "content": {
+                        "multipart/form-data": {
+                            "schema": {
+                                "required": [
+                                    "_method"
+                                ],
+                                "properties": {
+                                    "_method": {
+                                        "description": "Spoofing de método HTTP",
+                                        "type": "string",
+                                        "example": "PUT"
+                                    },
+                                    "name": {
+                                        "type": "string",
+                                        "example": "João da Silva"
+                                    },
+                                    "email": {
+                                        "type": "string",
+                                        "format": "email",
+                                        "example": "joao@email.com"
+                                    },
+                                    "city_id": {
+                                        "type": "integer",
+                                        "example": 1
+                                    },
+                                    "categories[]": {
+                                        "type": "array",
+                                        "items": {
+                                            "type": "integer"
+                                        },
+                                        "example": [
+                                            1,
+                                            3
+                                        ]
+                                    },
+                                    "avatar": {
+                                        "description": "Foto de perfil (máx. 5MB). Formatos: jpeg, png, gif, webp",
+                                        "type": "string",
+                                        "format": "binary"
+                                    },
+                                    "cover": {
+                                        "description": "Foto de capa (máx. 10MB). Formatos: jpeg, png, gif, webp",
+                                        "type": "string",
+                                        "format": "binary"
+                                    },
+                                    "remove_avatar": {
+                                        "description": "Remover foto de perfil atual",
+                                        "type": "boolean",
+                                        "example": false
+                                    },
+                                    "remove_cover": {
+                                        "description": "Remover foto de capa atual",
+                                        "type": "boolean",
+                                        "example": false
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Usuário atualizado com sucesso"
+                    },
+                    "403": {
+                        "description": "Não autorizado"
+                    },
+                    "422": {
+                        "description": "Dados inválidos"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/users/auth": {
+            "get": {
+                "tags": [
+                    "Usuários"
+                ],
+                "summary": "Retornar usuário autenticado",
+                "operationId": "eb1a6fa926b21a4957b5b8a89c89d708",
+                "responses": {
+                    "200": {
+                        "description": "Usuário autenticado"
+                    },
+                    "401": {
+                        "description": "Não autenticado"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/users/follow/{user}": {
+            "post": {
+                "tags": [
+                    "Usuários"
+                ],
+                "summary": "Seguir/deixar de seguir usuário",
+                "operationId": "972ce760d7c9c0d674563798bc1b9c98",
+                "parameters": [
+                    {
+                        "name": "user",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Follow alterado com sucesso"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        }
+    },
+    "components": {
+        "schemas": {
+            "Category": {
+                "title": "Category",
+                "properties": {
+                    "id": {
+                        "type": "integer",
+                        "example": 1
+                    },
+                    "name": {
+                        "type": "string",
+                        "example": "Eletricista"
+                    },
+                    "slug": {
+                        "type": "string",
+                        "example": "eletricista"
+                    }
+                },
+                "type": "object"
+            },
+            "UserImage": {
+                "title": "UserImage",
+                "properties": {
+                    "url": {
+                        "type": "string",
+                        "example": "http://localhost/storage/1/avatar.jpg"
+                    },
+                    "thumb_url": {
+                        "type": "string",
+                        "example": "http://localhost/storage/1/conversions/avatar-thumb.jpg",
+                        "nullable": true
+                    }
+                },
+                "type": "object",
+                "nullable": true
+            },
+            "User": {
+                "title": "User",
+                "properties": {
+                    "id": {
+                        "type": "integer",
+                        "example": 1
+                    },
+                    "name": {
+                        "type": "string",
+                        "example": "Hayssa Gomes"
+                    },
+                    "email": {
+                        "type": "string",
+                        "example": "hayssa@email.com"
+                    },
+                    "avatar": {
+                        "oneOf": [
+                            {
+                                "$ref": "#/components/schemas/UserImage"
+                            }
+                        ],
+                        "nullable": true
+                    },
+                    "cover": {
+                        "oneOf": [
+                            {
+                                "$ref": "#/components/schemas/UserImage"
+                            }
+                        ],
+                        "nullable": true
+                    },
+                    "followers_count": {
+                        "type": "integer",
+                        "example": 12
+                    },
+                    "following_count": {
+                        "type": "integer",
+                        "example": 8
+                    }
+                },
+                "type": "object"
+            },
+            "Publication": {
+                "title": "Publication",
+                "properties": {
+                    "id": {
+                        "type": "integer",
+                        "example": 1
+                    },
+                    "text": {
+                        "type": "string",
+                        "example": "Preciso de um eletricista para instalação residencial"
+                    },
+                    "type": {
+                        "description": "0=cliente, 1=prestador",
+                        "type": "integer",
+                        "example": 0
+                    },
+                    "author": {
+                        "$ref": "#/components/schemas/User"
+                    },
+                    "city": {
+                        "properties": {
+                            "id": {
+                                "type": "integer",
+                                "example": 1
+                            },
+                            "name": {
+                                "type": "string",
+                                "example": "São Paulo"
+                            }
+                        },
+                        "type": "object"
+                    },
+                    "categories": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/Category"
+                        }
+                    },
+                    "tags": {
+                        "type": "array",
+                        "items": {
+                            "type": "string"
+                        },
+                        "example": [
+                            "urgente",
+                            "residencial"
+                        ]
+                    },
+                    "media": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/PublicationMedia"
+                        }
+                    },
+                    "comments": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/Comment"
+                        }
+                    },
+                    "likes_count": {
+                        "type": "integer",
+                        "example": 5
+                    },
+                    "comments_count": {
+                        "type": "integer",
+                        "example": 3
+                    },
+                    "created_at": {
+                        "type": "string",
+                        "format": "date-time"
+                    },
+                    "updated_at": {
+                        "type": "string",
+                        "format": "date-time"
+                    }
+                },
+                "type": "object"
+            },
+            "Comment": {
+                "title": "Comment",
+                "properties": {
+                    "id": {
+                        "type": "integer",
+                        "example": 1
+                    },
+                    "comment": {
+                        "type": "string",
+                        "example": "Ótimo serviço!"
+                    },
+                    "author": {
+                        "$ref": "#/components/schemas/User"
+                    },
+                    "media": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/PublicationMedia"
+                        }
+                    },
+                    "created_at": {
+                        "type": "string",
+                        "format": "date-time"
+                    }
+                },
+                "type": "object"
+            },
+            "PublicationMedia": {
+                "title": "PublicationMedia",
+                "properties": {
+                    "id": {
+                        "type": "integer",
+                        "example": 1
+                    },
+                    "name": {
+                        "type": "string",
+                        "example": "foto-servico.jpg"
+                    },
+                    "mime_type": {
+                        "type": "string",
+                        "example": "image/jpeg"
+                    },
+                    "size": {
+                        "description": "Tamanho em bytes",
+                        "type": "integer",
+                        "example": 204800
+                    },
+                    "url": {
+                        "type": "string",
+                        "example": "http://localhost/storage/1/foto-servico.jpg"
+                    },
+                    "thumb_url": {
+                        "description": "URL do thumbnail (null para vídeos)",
+                        "type": "string",
+                        "example": "http://localhost/storage/1/conversions/foto-servico-thumb.jpg",
+                        "nullable": true
+                    },
+                    "type": {
+                        "type": "string",
+                        "enum": [
+                            "image",
+                            "video"
+                        ],
+                        "example": "image"
+                    },
+                    "created_at": {
+                        "type": "string",
+                        "format": "date-time"
+                    }
+                },
+                "type": "object"
+            },
+            "Collection": {
+                "title": "Collection",
+                "properties": {
+                    "id": {
+                        "type": "integer",
+                        "example": 1
+                    },
+                    "name": {
+                        "type": "string",
+                        "example": "Salvos"
+                    },
+                    "is_default": {
+                        "type": "boolean",
+                        "example": true
+                    },
+                    "publications_count": {
+                        "type": "integer",
+                        "example": 5
+                    },
+                    "publications": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/Publication"
+                        }
+                    },
+                    "created_at": {
+                        "type": "string",
+                        "format": "date-time"
+                    }
+                },
+                "type": "object"
+            }
+        },
+        "securitySchemes": {
+            "bearerAuth": {
+                "type": "apiKey",
+                "description": "Informe o token no formato: Bearer {token}",
+                "name": "Authorization",
+                "in": "header"
+            }
+        }
+    },
+    "tags": [
+        {
+            "name": "Auth",
+            "description": "Auth"
+        },
+        {
+            "name": "Categories",
+            "description": "Categories"
+        },
+        {
+            "name": "Coleções",
+            "description": "Coleções"
+        },
+        {
+            "name": "Publicações",
+            "description": "Publicações"
+        },
+        {
+            "name": "Usuários",
+            "description": "Usuários"
+        }
+    ],
+    "security": [
+        {
+            "bearerAuth": []
+        }
+    ]
+}

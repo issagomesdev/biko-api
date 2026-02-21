@@ -124,24 +124,7 @@ class PublicationController extends BaseController
      */
     public function show(Publication $publication)
     {
-        $authUser = request()->user();
-        $author = $publication->load('author')->author;
-
-        // Block check
-        if ($authUser && $authUser->id !== $author->id) {
-            if ($author->hasBlocked($authUser->id) || $author->isBlockedBy($authUser->id)) {
-                return $this->sendError('Publicação não encontrada.', [], 404);
-            }
-        }
-
-        if ($author->is_private) {
-            $isOwner = $authUser && $authUser->id === $author->id;
-            $isFollower = $authUser && $author->isFollowedBy($authUser->id);
-
-            if (! $isOwner && ! $isFollower) {
-                return $this->sendError('Publicação não encontrada.', [], 404);
-            }
-        }
+        $this->service->assertCanView($publication, request()->user());
 
         $publication = $this->service->findWithRelations($publication);
 

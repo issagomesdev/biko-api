@@ -2,17 +2,18 @@
 
 namespace App\Http\Controllers\Api;
 
-use App\Http\Controllers\Api\BaseController;
 use App\Http\Requests\Auth\LoginRequest;
 use App\Http\Requests\Auth\RegisterRequest;
-use App\Models\User;
-use Illuminate\Http\JsonResponse;
-use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Hash;
 use App\Http\Resources\UserResource;
+use App\Services\AuthService;
+use Illuminate\Http\JsonResponse;
 
 class AuthController extends BaseController
 {
+    public function __construct(
+        private readonly AuthService $service
+    ) {}
+
     /**
      * @OA\Post(
      *     path="/register",
@@ -23,9 +24,8 @@ class AuthController extends BaseController
      *     @OA\RequestBody(
      *         required=true,
      *         @OA\JsonContent(
-     *             required={"name","username","email","password","city_id"},
+     *             required={"name","email","password","city_id"},
      *             @OA\Property(property="name", type="string", example="Fulano de tal"),
-     *             @OA\Property(property="username", type="string", example="fulano.tal", description="Apenas letras, números, ponto e underscore"),
      *             @OA\Property(property="email", type="string", format="email", example="fulano@email.com"),
      *             @OA\Property(property="phone", type="string", example="(11) 99999-1234"),
      *             @OA\Property(property="password", type="string", format="password", example="12345678"),
@@ -62,29 +62,20 @@ class AuthController extends BaseController
      */
     public function register(RegisterRequest $request): JsonResponse
     {
-        $data = $request->validated();
-
-        $data['password'] = Hash::make($data['password']);
-
-        $user = User::create($data);
-
-        if (!empty($data['categories'])) {
-            $user->categories()->sync($data['categories']);
-        }
-
-        $user->load('categories');
+        $result = $this->service->register($request->validated());
 
         return $this->sendResponse([
-            'token' => $user->createToken('api')->plainTextToken,
-            'data' => new UserResource($user),
+            'token' => $result['token'],
+            'data'  => new UserResource($result['data']),
         ], 'Cadastro realizado com sucesso!');
     }
+
     /**
      * @OA\Post(
      *     path="/login",
      *     tags={"Auth"},
      *     summary="Autenticar usuário",
-     *     description="Realiza login e retorna token de autenticação",
+     *     description="Realiza login e retorna token de autenticação. Se a conta estiver soft-deleted há menos de 60 dias, ela é restaurada automaticamente.",
      *
      *     @OA\RequestBody(
      *         required=true,
@@ -102,58 +93,27 @@ class AuthController extends BaseController
      *
      *     @OA\Response(
      *         response=401,
-     *         description="Credenciais inválidas"
+     *         description="Credenciais inválidas ou conta permanentemente excluída"
      *     )
      * )
      */
     public function login(LoginRequest $request): JsonResponse
     {
-        // Check for soft-deleted account (recovery within 60 days)
-        $deletedUser = User::onlyTrashed()
-            ->where('email', $request->email)
-            ->first();
+        $result = $this->service->login($request->email, $request->password);
 
-        if ($deletedUser) {
-            if ($deletedUser->deleted_at->diffInDays(now()) > 60) {
-                return $this->sendError(
-                    'Esta conta foi excluída permanentemente.',
-                    [],
-                    401
-                );
-            }
+        $data = [
+            'token' => $result['token'],
+            'data'  => new UserResource($result['data']),
+        ];
 
-            if (!Hash::check($request->password, $deletedUser->password)) {
-                return $this->sendError(
-                    'Credenciais inválidas',
-                    ['email' => ['E-mail ou senha incorretos']],
-                    401
-                );
-            }
-
-            $deletedUser->restore();
-
-            return $this->sendResponse([
-                'token' => $deletedUser->createToken('api')->plainTextToken,
-                'data'  => new UserResource($deletedUser->load('categories')),
-                'restored' => true,
-            ], 'Conta restaurada com sucesso! Atualize seus dados de perfil.');
+        if ($result['restored']) {
+            $data['restored'] = true;
+            return $this->sendResponse($data, 'Conta restaurada com sucesso! Atualize seus dados de perfil.');
         }
 
-        if (!Auth::attempt($request->only('email', 'password'))) {
-            return $this->sendError(
-                'Credenciais inválidas',
-                ['email' => ['E-mail ou senha incorretos']],
-                401
-            );
-        }
-
-        $user = Auth::user()->load('categories');
-
-        return $this->sendResponse([
-            'token' => $user->createToken('api')->plainTextToken,
-            'data'  => new UserResource($user),
-        ], 'Login realizado com sucesso!');
+        return $this->sendResponse($data, 'Login realizado com sucesso!');
     }
+
     /**
      * @OA\Post(
      *     path="/logout",
@@ -176,7 +136,7 @@ class AuthController extends BaseController
      */
     public function logout(): JsonResponse
     {
-        auth()->user()->currentAccessToken()->delete();
+        $this->service->logout(auth()->user());
 
         return $this->sendResponse(null, 'Desconectado');
     }

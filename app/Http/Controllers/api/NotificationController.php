@@ -97,9 +97,7 @@ class NotificationController extends BaseController
      */
     public function read(Notification $notification)
     {
-        if ($notification->user_id !== request()->user()->id) {
-            return $this->sendError('Não autorizado.', [], 403);
-        }
+        $this->service->assertOwns($notification, request()->user()->id);
 
         $this->service->markAsRead($notification);
 

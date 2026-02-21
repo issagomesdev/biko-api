@@ -271,9 +271,7 @@ class UserController extends BaseController
      */
     public function block(User $user, Request $request)
     {
-        if ($request->user()->id === $user->id) {
-            return $this->sendError('Você não pode bloquear a si mesmo.', [], 422);
-        }
+        $this->service->assertCanBlock($request->user(), $user);
 
         $this->service->blockUser($request->user(), $user->id);
 

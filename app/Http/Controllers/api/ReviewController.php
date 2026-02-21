@@ -45,21 +45,9 @@ class ReviewController extends BaseController
      */
     public function index(User $user, Request $request)
     {
-        $authUser = $request->user();
+        $this->service->assertCanView($user, $request->user());
 
-        if ($authUser && $authUser->id !== $user->id) {
-            if ($user->hasBlocked($authUser->id) || $user->isBlockedBy($authUser->id)) {
-                return $this->sendError('Acesso negado.', [], 403);
-            }
-        }
-
-        if ($user->is_private) {
-            if (! $authUser || ($authUser->id !== $user->id && ! $user->isFollowedBy($authUser->id))) {
-                return $this->sendError('Acesso negado.', [], 403);
-            }
-        }
-
-        $reviews = $this->service->listForUser($user, (int) $request->query('per_page', 20), $authUser?->id);
+        $reviews = $this->service->listForUser($user, (int) $request->query('per_page', 20), $request->user()?->id);
 
         return $this->sendResponse(
             ReviewResource::collection($reviews)->response()->getData(true),
@@ -100,32 +88,11 @@ class ReviewController extends BaseController
      */
     public function store(StoreReviewRequest $request, User $user)
     {
-        $authUser = $request->user();
-
-        if ($authUser->id === $user->id) {
-            return $this->sendError('Você não pode avaliar a si mesmo.', [], 403);
-        }
-
-        if ($user->hasBlocked($authUser->id) || $user->isBlockedBy($authUser->id)) {
-            return $this->sendError('Não é possível avaliar este usuário.', [], 403);
-        }
-
-        if ($user->is_private && ! $user->isFollowedBy($authUser->id)) {
-            return $this->sendError('Apenas seguidores podem avaliar este perfil.', [], 403);
-        }
-
-        $existing = Review::where('user_id', $user->id)
-            ->where('reviewer_id', $authUser->id)
-            ->whereNull('parent_id')
-            ->exists();
-
-        if ($existing) {
-            return $this->sendError('Você já avaliou este usuário.', [], 409);
-        }
+        $this->service->assertCanCreate($user, $request->user());
 
         $review = $this->service->create(
             $user,
-            $authUser->id,
+            $request->user()->id,
             $request->validated('stars'),
             $request->validated('comment'),
             $request->file('media', []),

@@ -68,21 +68,9 @@ class ChatController extends BaseController
      */
     public function store(User $user, Request $request)
     {
-        $authUser = $request->user();
+        $this->service->assertCanStartConversation($request->user(), $user);
 
-        if ($authUser->id === $user->id) {
-            return $this->sendError('Você não pode conversar consigo mesmo.', [], 403);
-        }
-
-        if ($user->hasBlocked($authUser->id) || $user->isBlockedBy($authUser->id)) {
-            return $this->sendError('Não é possível iniciar conversa com este usuário.', [], 403);
-        }
-
-        if ($user->is_private && ! $user->isFollowedBy($authUser->id)) {
-            return $this->sendError('Apenas seguidores podem enviar mensagens para este perfil.', [], 403);
-        }
-
-        $conversation = $this->service->findOrCreateConversation($authUser->id, $user->id);
+        $conversation = $this->service->findOrCreateConversation($request->user()->id, $user->id);
         $conversation->load(['userOne.media', 'userTwo.media', 'latestMessage.sender']);
 
         return $this->sendResponse(
@@ -118,11 +106,7 @@ class ChatController extends BaseController
      */
     public function show(Conversation $conversation, Request $request)
     {
-        $authUser = $request->user();
-
-        if ($authUser->id !== $conversation->user_one_id && $authUser->id !== $conversation->user_two_id) {
-            return $this->sendError('Acesso negado.', [], 403);
-        }
+        $this->service->assertParticipant($conversation, $request->user()->id);
 
         $messages = $this->service->getMessages(
             $conversation,
@@ -190,13 +174,9 @@ class ChatController extends BaseController
      */
     public function markAsRead(Conversation $conversation, Request $request)
     {
-        $authUser = $request->user();
+        $this->service->assertParticipant($conversation, $request->user()->id);
 
-        if ($authUser->id !== $conversation->user_one_id && $authUser->id !== $conversation->user_two_id) {
-            return $this->sendError('Acesso negado.', [], 403);
-        }
-
-        $this->service->markAsRead($conversation, $authUser->id);
+        $this->service->markAsRead($conversation, $request->user()->id);
 
         return $this->sendResponse([], 'Mensagens marcadas como lidas.');
     }

@@ -27,7 +27,6 @@ class AuthTest extends TestCase
     {
         $response = $this->postJson('/api/register', [
             'name' => 'João Silva',
-            'username' => 'joao.silva',
             'email' => 'joao@email.com',
             'password' => '12345678',
             'city_id' => $this->city->id,
@@ -45,8 +44,26 @@ class AuthTest extends TestCase
         $this->assertDatabaseHas('users', [
             'email' => 'joao@email.com',
             'name' => 'João Silva',
+            'username' => 'joao.silva',
             'city_id' => $this->city->id,
         ]);
+    }
+
+    public function test_register_generates_unique_username(): void
+    {
+        User::factory()->create(['username' => 'maria.souza']);
+
+        $response = $this->postJson('/api/register', [
+            'name' => 'Maria Souza',
+            'email' => 'maria2@email.com',
+            'password' => '12345678',
+            'city_id' => $this->city->id,
+        ]);
+
+        $response->assertOk();
+
+        $user = User::where('email', 'maria2@email.com')->first();
+        $this->assertEquals('maria.souza1', $user->username);
     }
 
     public function test_register_with_categories(): void
@@ -55,7 +72,6 @@ class AuthTest extends TestCase
 
         $response = $this->postJson('/api/register', [
             'name' => 'Maria Souza',
-            'username' => 'maria.souza',
             'email' => 'maria@email.com',
             'password' => '12345678',
             'city_id' => $this->city->id,
@@ -74,7 +90,7 @@ class AuthTest extends TestCase
         $response = $this->postJson('/api/register', []);
 
         $response->assertUnprocessable()
-            ->assertJsonValidationErrors(['name', 'username', 'email', 'password', 'city_id']);
+            ->assertJsonValidationErrors(['name', 'email', 'password', 'city_id']);
     }
 
     public function test_register_fails_with_duplicate_email(): void
@@ -168,10 +184,7 @@ class AuthTest extends TestCase
         ]);
 
         $response->assertUnauthorized()
-            ->assertJson([
-                'success' => false,
-                'message' => 'Credenciais inválidas',
-            ]);
+            ->assertJson(['message' => 'Credenciais inválidas']);
     }
 
     public function test_login_fails_with_nonexistent_email(): void

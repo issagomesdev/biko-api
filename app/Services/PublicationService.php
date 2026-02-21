@@ -16,6 +16,28 @@ class PublicationService
     public function __construct(
         private readonly NotificationService $notificationService
     ) {}
+    public function assertCanView(Publication $publication, ?User $authUser): void
+    {
+        $author = $publication->relationLoaded('author')
+            ? $publication->author
+            : $publication->load('author')->author;
+
+        if ($authUser && $authUser->id !== $author->id) {
+            if ($author->hasBlocked($authUser->id) || $author->isBlockedBy($authUser->id)) {
+                abort(404, 'Publicação não encontrada.');
+            }
+        }
+
+        if ($author->is_private) {
+            $isOwner = $authUser && $authUser->id === $author->id;
+            $isFollower = $authUser && $author->isFollowedBy($authUser->id);
+
+            if (! $isOwner && ! $isFollower) {
+                abort(404, 'Publicação não encontrada.');
+            }
+        }
+    }
+
     public function list(array $filters = [], ?int $authUserId = null): LengthAwarePaginator
     {
         $query = Publication::query()

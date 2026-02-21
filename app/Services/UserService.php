@@ -38,6 +38,13 @@ class UserService
         return $user->load('categories', 'city', 'media')->loadCount(['followers', 'following', 'reviews' => fn ($q) => $q->whereNull('parent_id')]);
     }
 
+    public function assertCanBlock(User $blocker, User $target): void
+    {
+        if ($blocker->id === $target->id) {
+            abort(422, 'Você não pode bloquear a si mesmo.');
+        }
+    }
+
     public function blockUser(User $user, int $blockedUserId): void
     {
         $user->blockedUsers()->syncWithoutDetaching([$blockedUserId]);

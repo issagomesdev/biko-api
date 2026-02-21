@@ -18,6 +18,28 @@ class ChatService
         private readonly NotificationService $notificationService
     ) {}
 
+    public function assertCanStartConversation(User $authUser, User $target): void
+    {
+        if ($authUser->id === $target->id) {
+            abort(403, 'Você não pode conversar consigo mesmo.');
+        }
+
+        if ($target->hasBlocked($authUser->id) || $target->isBlockedBy($authUser->id)) {
+            abort(403, 'Não é possível iniciar conversa com este usuário.');
+        }
+
+        if ($target->is_private && ! $target->isFollowedBy($authUser->id)) {
+            abort(403, 'Apenas seguidores podem enviar mensagens para este perfil.');
+        }
+    }
+
+    public function assertParticipant(Conversation $conversation, int $userId): void
+    {
+        if ($userId !== $conversation->user_one_id && $userId !== $conversation->user_two_id) {
+            abort(403, 'Acesso negado.');
+        }
+    }
+
     public function listConversations(User $user, int $perPage = 20): LengthAwarePaginator
     {
         $blockedIds = $user->blockedUsers()->pluck('users.id')->all();

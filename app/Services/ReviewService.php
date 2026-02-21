@@ -13,6 +13,45 @@ class ReviewService
         private readonly NotificationService $notificationService
     ) {}
 
+    public function assertCanView(User $user, ?User $authUser): void
+    {
+        if ($authUser && $authUser->id !== $user->id) {
+            if ($user->hasBlocked($authUser->id) || $user->isBlockedBy($authUser->id)) {
+                abort(403, 'Acesso negado.');
+            }
+        }
+
+        if ($user->is_private) {
+            if (! $authUser || ($authUser->id !== $user->id && ! $user->isFollowedBy($authUser->id))) {
+                abort(403, 'Acesso negado.');
+            }
+        }
+    }
+
+    public function assertCanCreate(User $user, User $authUser): void
+    {
+        if ($authUser->id === $user->id) {
+            abort(403, 'Você não pode avaliar a si mesmo.');
+        }
+
+        if ($user->hasBlocked($authUser->id) || $user->isBlockedBy($authUser->id)) {
+            abort(403, 'Não é possível avaliar este usuário.');
+        }
+
+        if ($user->is_private && ! $user->isFollowedBy($authUser->id)) {
+            abort(403, 'Apenas seguidores podem avaliar este perfil.');
+        }
+
+        $exists = Review::where('user_id', $user->id)
+            ->where('reviewer_id', $authUser->id)
+            ->whereNull('parent_id')
+            ->exists();
+
+        if ($exists) {
+            abort(409, 'Você já avaliou este usuário.');
+        }
+    }
+
     public function listForUser(User $user, int $perPage = 20, ?int $authUserId = null): LengthAwarePaginator
     {
         $query = $user->reviews()

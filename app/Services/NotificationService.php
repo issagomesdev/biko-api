@@ -8,6 +8,13 @@ use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 
 class NotificationService
 {
+    public function assertOwns(Notification $notification, int $userId): void
+    {
+        if ($notification->user_id !== $userId) {
+            abort(403, 'Não autorizado.');
+        }
+    }
+
     public function list(User $user, ?string $type = null, int $perPage = 20): LengthAwarePaginator
     {
         return Notification::query()

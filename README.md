@@ -214,7 +214,7 @@ Overview of the main project structure:
 
 ### Requirements
 
-- [Docker Desktop](https://www.docker.com/products/docker-desktop)
+- [Docker](https://www.docker.com)
 
 ### Running with Docker (recommended)
 ```bash

@@ -11,7 +11,7 @@ class CitySeeder extends Seeder
 {
     public function run(): void
     {
-        $response = Http::get(
+        $response = Http::timeout(300)->get(
             'https://servicodados.ibge.gov.br/api/v1/localidades/municipios'
         );
 

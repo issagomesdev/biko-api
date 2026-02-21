@@ -1,8 +1,10 @@
 # 🛠️ Biko — Social platform for service providers and seekers (Laravel API)
 
-![Laravel](https://img.shields.io/badge/laravel-%23FF2D20.svg?style=for-the-badge&logo=laravel&logoColor=white) 
-
-![Status](https://img.shields.io/badge/status-in_development-yellow) 
+![Laravel](https://img.shields.io/badge/laravel-%23FF2D20.svg?style=for-the-badge&logo=laravel&logoColor=white)
+![PHP](https://img.shields.io/badge/php-%23777BB4.svg?style=for-the-badge&logo=php&logoColor=white)
+![MySQL](https://img.shields.io/badge/mysql-4479A1.svg?style=for-the-badge&logo=mysql&logoColor=white)
+![Docker](https://img.shields.io/badge/docker-%230db7ed.svg?style=for-the-badge&logo=docker&logoColor=white)
+![Status](https://img.shields.io/badge/status-beta-blue?style=for-the-badge)
 
 <p align="center">
   <a href="#about">About</a> •
@@ -56,6 +58,7 @@ This project was developed as the final assignment for the Laboratory of Innovat
 
 This project was built using the following technologies and tools:
 
+- [Docker](https://docs.docker.com)
 - [Laravel 11](https://laravel.com/docs)
 - [Laravel Sanctum](https://laravel.com/docs/sanctum) — Token-based authentication
 - [Laravel Reverb](https://laravel.com/docs/reverb) — WebSocket server for real-time chat
@@ -85,18 +88,10 @@ Overview of the main project structure:
 📂 app/
  ┣ 📂 Http/
  ┃ ┣ 📂 Controllers/Api/     # API controllers
- ┃ ┃ ┣ 📄 AuthController.php
- ┃ ┃ ┣ 📄 UserController.php
- ┃ ┃ ┣ 📄 PublicationController.php
- ┃ ┃ ┗ 📄 ...
  ┃ ┣ 📂 Requests/            # Form request validation
  ┃ ┗ 📂 Resources/           # API resource transformers
  ┣ 📂 Models/                # Eloquent models and relationships
  ┣ 📂 Services/              # Business logic layer
- ┃ ┣ 📄 UserService.php
- ┃ ┣ 📄 PublicationService.php
- ┃ ┣ 📄 ReviewService.php
- ┃ ┗ 📄 ...
  ┣ 📂 Events/                # WebSocket broadcast events
  ┗ 📂 Console/Commands/      # Scheduled commands
 
@@ -219,14 +214,45 @@ Overview of the main project structure:
 
 ### Requirements
 
-- PHP >= 8.2
+- [Docker Desktop](https://www.docker.com/products/docker-desktop)
+
+### Running with Docker (recommended)
+```bash
+# Clone the repository
+git clone https://github.com/issagomesdev/biko-api.git
+cd biko-api
+
+# Copy and configure environment variables
+cp .env.example .env
+
+# Update these variables in .env:
+# DB_HOST=db
+# DB_USERNAME=biko_user
+# DB_PASSWORD=biko_password
+# DB_ROOT_PASSWORD=root_password
+
+# Build and start all containers
+docker compose up -d --build
+
+# Generate application key
+docker compose exec app php artisan key:generate
+
+# Run migrations and seeders
+docker compose exec app php artisan migrate:fresh --seed
+```
+
+The API will be available at `http://localhost:8000`
+WebSocket server (Reverb) will be available at `http://localhost:8080`
+
+### Running locally (without Docker)
+
+### Requirements
+
+- PHP >= 8.3
 - Laravel 11
 - Composer
-- MySQL or compatible DB
-- [Laravel Reverb](https://laravel.com/docs/reverb) (for real-time chat)
-
-### Installation
-
+- MySQL
+- [Laravel Reverb](https://laravel.com/docs/reverb)
 ```bash
 # Clone the repository
 git clone https://github.com/issagomesdev/biko-api.git

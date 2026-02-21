@@ -206,6 +206,8 @@ class AuthTest extends TestCase
 
         $token = $user->createToken('api')->plainTextToken;
 
+        $tokenId = $user->tokens()->first()->id;
+
         $response = $this->withHeader('Authorization', "Bearer $token")
             ->postJson('/api/logout');
 
@@ -215,7 +217,9 @@ class AuthTest extends TestCase
                 'message' => 'Desconectado',
             ]);
 
-        $this->assertDatabaseCount('personal_access_tokens', 0);
+        $this->assertDatabaseMissing('personal_access_tokens', [
+            'id' => $tokenId,
+        ]);
     }
 
     public function test_logout_fails_without_authentication(): void

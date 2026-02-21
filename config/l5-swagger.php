@@ -102,8 +102,8 @@ return [
         ],
 
         'constants' => [
-            'APP_URL' => env('APP_URL') . 'api',
-            'API_URL' => env('APP_URL') . 'api',
+            'APP_URL' => env('APP_URL') . '/api',
+            'API_URL' => env('APP_URL') . '/api',
         ],
     ],
 ];

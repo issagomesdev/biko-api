@@ -7,7 +7,7 @@
     },
     "servers": [
         {
-            "url": "http://biko-api.test/api",
+            "url": "http://localhost:8000/api",
             "description": "Servidor da API"
         },
         {
@@ -30,6 +30,7 @@
                             "schema": {
                                 "required": [
                                     "name",
+                                    "username",
                                     "email",
                                     "password",
                                     "city_id"
@@ -39,10 +40,19 @@
                                         "type": "string",
                                         "example": "Fulano de tal"
                                     },
+                                    "username": {
+                                        "description": "Apenas letras, números, ponto e underscore",
+                                        "type": "string",
+                                        "example": "fulano.tal"
+                                    },
                                     "email": {
                                         "type": "string",
                                         "format": "email",
                                         "example": "fulano@email.com"
+                                    },
+                                    "phone": {
+                                        "type": "string",
+                                        "example": "(11) 99999-1234"
                                     },
                                     "password": {
                                         "type": "string",
@@ -225,6 +235,285 @@
                         "description": "Categoria não encontrada"
                     }
                 }
+            }
+        },
+        "/conversations": {
+            "get": {
+                "tags": [
+                    "Chat"
+                ],
+                "summary": "Listar conversas do usuário autenticado",
+                "operationId": "8ed34951b4503c42168a03505d3893c8",
+                "parameters": [
+                    {
+                        "name": "per_page",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "integer"
+                        },
+                        "example": 20
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Lista paginada de conversas",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/components/schemas/Conversation"
+                                            }
+                                        },
+                                        "message": {
+                                            "type": "string"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/conversations/{user}": {
+            "post": {
+                "tags": [
+                    "Chat"
+                ],
+                "summary": "Iniciar ou obter conversa com um usuário",
+                "operationId": "42ec4574ddfa6df224e62a528c0a412c",
+                "parameters": [
+                    {
+                        "name": "user",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Conversa obtida/criada com sucesso"
+                    },
+                    "403": {
+                        "description": "Não autorizado a iniciar conversa com este usuário"
+                    },
+                    "404": {
+                        "description": "Usuário não encontrado"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/conversations/{conversation}": {
+            "get": {
+                "tags": [
+                    "Chat"
+                ],
+                "summary": "Ver mensagens de uma conversa",
+                "operationId": "3a1950bf32a27c64a92e6e0eed4ad890",
+                "parameters": [
+                    {
+                        "name": "conversation",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "per_page",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "integer"
+                        },
+                        "example": 50
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Mensagens da conversa",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/components/schemas/Message"
+                                            }
+                                        },
+                                        "message": {
+                                            "type": "string"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "Não autorizado"
+                    },
+                    "404": {
+                        "description": "Conversa não encontrada"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/conversations/{conversation}/messages": {
+            "post": {
+                "tags": [
+                    "Chat"
+                ],
+                "summary": "Enviar mensagem em uma conversa",
+                "operationId": "ce364c5f018a6d27f851f751fb6d0441",
+                "parameters": [
+                    {
+                        "name": "conversation",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "body"
+                                ],
+                                "properties": {
+                                    "body": {
+                                        "type": "string",
+                                        "example": "Olá, tudo bem?"
+                                    },
+                                    "reply_to_id": {
+                                        "description": "ID da mensagem sendo respondida",
+                                        "type": "integer",
+                                        "nullable": true
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Mensagem enviada com sucesso"
+                    },
+                    "403": {
+                        "description": "Não autorizado"
+                    },
+                    "422": {
+                        "description": "Dados inválidos"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/conversations/{conversation}/read": {
+            "post": {
+                "tags": [
+                    "Chat"
+                ],
+                "summary": "Marcar mensagens da conversa como lidas",
+                "operationId": "57054c95aae37b05a692cb6117e748c4",
+                "parameters": [
+                    {
+                        "name": "conversation",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Mensagens marcadas como lidas"
+                    },
+                    "403": {
+                        "description": "Não autorizado"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/messages/{message}": {
+            "delete": {
+                "tags": [
+                    "Chat"
+                ],
+                "summary": "Deletar mensagem",
+                "operationId": "8e2666d2eaba34e101519f6a0d42d83a",
+                "parameters": [
+                    {
+                        "name": "message",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Mensagem deletada com sucesso"
+                    },
+                    "403": {
+                        "description": "Não autorizado"
+                    },
+                    "404": {
+                        "description": "Mensagem não encontrada"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
             }
         },
         "/collections": {
@@ -458,6 +747,214 @@
                 ]
             }
         },
+        "/notifications": {
+            "get": {
+                "tags": [
+                    "Notificações"
+                ],
+                "summary": "Listar notificações do usuário autenticado",
+                "operationId": "b1274a2aaae8a4295a7e1925e8d8090f",
+                "parameters": [
+                    {
+                        "name": "type",
+                        "in": "query",
+                        "description": "Filtrar por tipo de notificação",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "enum": [
+                                "like",
+                                "comment",
+                                "follow",
+                                "follow_request",
+                                "mention",
+                                "review",
+                                "review_reply",
+                                "comment_reply",
+                                "message"
+                            ]
+                        }
+                    },
+                    {
+                        "name": "per_page",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "integer"
+                        },
+                        "example": 20
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Lista paginada de notificações",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/components/schemas/Notification"
+                                            }
+                                        },
+                                        "message": {
+                                            "type": "string"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/notifications/unread-count": {
+            "get": {
+                "tags": [
+                    "Notificações"
+                ],
+                "summary": "Contagem de notificações não lidas",
+                "operationId": "85697ee523a5dace428185c95efb9f2f",
+                "responses": {
+                    "200": {
+                        "description": "Contagem de notificações não lidas por tipo",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "data": {
+                                            "properties": {
+                                                "total": {
+                                                    "type": "integer",
+                                                    "example": 12
+                                                },
+                                                "like": {
+                                                    "type": "integer",
+                                                    "example": 5
+                                                },
+                                                "comment": {
+                                                    "type": "integer",
+                                                    "example": 3
+                                                },
+                                                "follow": {
+                                                    "type": "integer",
+                                                    "example": 2
+                                                },
+                                                "mention": {
+                                                    "type": "integer",
+                                                    "example": 2
+                                                }
+                                            },
+                                            "type": "object"
+                                        },
+                                        "message": {
+                                            "type": "string"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/notifications/{notification}/read": {
+            "post": {
+                "tags": [
+                    "Notificações"
+                ],
+                "summary": "Marcar notificação como lida",
+                "operationId": "dd3acda98d7f17cf9d19d7fe13e3a0eb",
+                "parameters": [
+                    {
+                        "name": "notification",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Notificação marcada como lida"
+                    },
+                    "403": {
+                        "description": "Não autorizado"
+                    },
+                    "404": {
+                        "description": "Notificação não encontrada"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/notifications/read-all": {
+            "post": {
+                "tags": [
+                    "Notificações"
+                ],
+                "summary": "Marcar todas as notificações como lidas",
+                "operationId": "a99413cb37ed54e1e9d9bb78fb52c68d",
+                "parameters": [
+                    {
+                        "name": "type",
+                        "in": "query",
+                        "description": "Marcar apenas notificações deste tipo",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "enum": [
+                                "like",
+                                "comment",
+                                "follow",
+                                "follow_request",
+                                "mention",
+                                "review",
+                                "review_reply",
+                                "comment_reply",
+                                "message"
+                            ]
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Notificações marcadas como lidas"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
         "/publications": {
             "get": {
                 "tags": [
@@ -663,6 +1160,17 @@
                                             "resultado"
                                         ]
                                     },
+                                    "mentions[]": {
+                                        "description": "IDs dos usuários mencionados (além dos @username detectados no texto)",
+                                        "type": "array",
+                                        "items": {
+                                            "type": "integer"
+                                        },
+                                        "example": [
+                                            1,
+                                            5
+                                        ]
+                                    },
                                     "media[]": {
                                         "description": "Fotos e vídeos (máx. 10 arquivos, 50MB cada). Formatos: jpeg, png, gif, webp, mp4, mov, avi, webm",
                                         "type": "array",
@@ -781,6 +1289,17 @@
                                         },
                                         "example": [
                                             "urgente"
+                                        ]
+                                    },
+                                    "mentions[]": {
+                                        "description": "IDs dos usuários mencionados (além dos @username detectados no texto)",
+                                        "type": "array",
+                                        "items": {
+                                            "type": "integer"
+                                        },
+                                        "example": [
+                                            1,
+                                            5
                                         ]
                                     },
                                     "media[]": {
@@ -915,6 +1434,11 @@
                                         "type": "string",
                                         "example": "Ótimo serviço!"
                                     },
+                                    "parent_id": {
+                                        "description": "ID do comentário pai (para replies)",
+                                        "type": "integer",
+                                        "nullable": true
+                                    },
                                     "media[]": {
                                         "description": "Fotos e vídeos (máx. 5 arquivos, 50MB cada)",
                                         "type": "array",
@@ -970,6 +1494,319 @@
                     },
                     "404": {
                         "description": "Comentário não encontrado"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/users/{user}/reviews": {
+            "get": {
+                "tags": [
+                    "Avaliações"
+                ],
+                "summary": "Listar avaliações de um usuário",
+                "operationId": "321db87dd680969d959e19b51700a760",
+                "parameters": [
+                    {
+                        "name": "user",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "per_page",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "integer"
+                        },
+                        "example": 20
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Lista paginada de avaliações",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/components/schemas/Review"
+                                            }
+                                        },
+                                        "message": {
+                                            "type": "string"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "Perfil privado — apenas seguidores podem ver avaliações"
+                    },
+                    "404": {
+                        "description": "Usuário não encontrado"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "post": {
+                "tags": [
+                    "Avaliações"
+                ],
+                "summary": "Criar avaliação para um usuário",
+                "operationId": "d4d1bf6fda3d52be6b66fce505ed84d4",
+                "parameters": [
+                    {
+                        "name": "user",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "multipart/form-data": {
+                            "schema": {
+                                "required": [
+                                    "stars",
+                                    "comment"
+                                ],
+                                "properties": {
+                                    "stars": {
+                                        "description": "1 a 5 estrelas",
+                                        "type": "integer",
+                                        "example": 5
+                                    },
+                                    "comment": {
+                                        "type": "string",
+                                        "example": "Excelente profissional!"
+                                    },
+                                    "media[]": {
+                                        "description": "Fotos e vídeos (máx. 5 arquivos, 50MB cada)",
+                                        "type": "array",
+                                        "items": {
+                                            "type": "string",
+                                            "format": "binary"
+                                        }
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Avaliação criada com sucesso"
+                    },
+                    "403": {
+                        "description": "Perfil privado — apenas seguidores podem avaliar"
+                    },
+                    "409": {
+                        "description": "Você já avaliou este usuário"
+                    },
+                    "422": {
+                        "description": "Dados inválidos"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/reviews/{review}/reply": {
+            "post": {
+                "tags": [
+                    "Avaliações"
+                ],
+                "summary": "Responder a uma avaliação",
+                "operationId": "fb5167e3efbf407dc94367acb9de4d40",
+                "parameters": [
+                    {
+                        "name": "review",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "multipart/form-data": {
+                            "schema": {
+                                "required": [
+                                    "comment"
+                                ],
+                                "properties": {
+                                    "comment": {
+                                        "type": "string",
+                                        "example": "Obrigado pela avaliação!"
+                                    },
+                                    "media[]": {
+                                        "description": "Fotos e vídeos (máx. 5 arquivos, 50MB cada)",
+                                        "type": "array",
+                                        "items": {
+                                            "type": "string",
+                                            "format": "binary"
+                                        }
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Resposta criada com sucesso"
+                    },
+                    "404": {
+                        "description": "Avaliação não encontrada"
+                    },
+                    "422": {
+                        "description": "Dados inválidos"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/reviews/{review}": {
+            "post": {
+                "tags": [
+                    "Avaliações"
+                ],
+                "summary": "Editar avaliação ou resposta (usar _method=PUT)",
+                "operationId": "a6db13b2867afe6bf67f8eadf4a93739",
+                "parameters": [
+                    {
+                        "name": "review",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "multipart/form-data": {
+                            "schema": {
+                                "required": [
+                                    "_method"
+                                ],
+                                "properties": {
+                                    "_method": {
+                                        "description": "Spoofing de método HTTP",
+                                        "type": "string",
+                                        "example": "PUT"
+                                    },
+                                    "stars": {
+                                        "description": "1 a 5 estrelas (apenas avaliações raiz)",
+                                        "type": "integer",
+                                        "example": 4
+                                    },
+                                    "comment": {
+                                        "type": "string",
+                                        "example": "Atualizando minha avaliação"
+                                    },
+                                    "media[]": {
+                                        "description": "Novas mídias (máx. 5 no total, 50MB cada)",
+                                        "type": "array",
+                                        "items": {
+                                            "type": "string",
+                                            "format": "binary"
+                                        }
+                                    },
+                                    "remove_media[]": {
+                                        "description": "IDs das mídias a remover",
+                                        "type": "array",
+                                        "items": {
+                                            "type": "integer"
+                                        },
+                                        "example": [
+                                            1,
+                                            3
+                                        ]
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Avaliação atualizada com sucesso"
+                    },
+                    "403": {
+                        "description": "Não autorizado"
+                    },
+                    "422": {
+                        "description": "Dados inválidos"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "delete": {
+                "tags": [
+                    "Avaliações"
+                ],
+                "summary": "Deletar avaliação ou resposta",
+                "operationId": "f3c86d7c68d0b4446d96a11d54204a1c",
+                "parameters": [
+                    {
+                        "name": "review",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Avaliação deletada com sucesso"
+                    },
+                    "403": {
+                        "description": "Não autorizado"
+                    },
+                    "404": {
+                        "description": "Avaliação não encontrada"
                     }
                 },
                 "security": [
@@ -1147,10 +1984,29 @@
                                         "type": "string",
                                         "example": "João da Silva"
                                     },
+                                    "username": {
+                                        "description": "Apenas letras, números, ponto e underscore",
+                                        "type": "string",
+                                        "example": "joao.silva"
+                                    },
                                     "email": {
                                         "type": "string",
                                         "format": "email",
                                         "example": "joao@email.com"
+                                    },
+                                    "phone": {
+                                        "type": "string",
+                                        "example": "(11) 99999-1234"
+                                    },
+                                    "description": {
+                                        "description": "Bio do usuário (máx. 200 caracteres)",
+                                        "type": "string",
+                                        "example": "Eletricista profissional com 10 anos de experiência"
+                                    },
+                                    "is_private": {
+                                        "description": "Perfil privado (seguidores precisam de aprovação)",
+                                        "type": "boolean",
+                                        "example": false
                                     },
                                     "city_id": {
                                         "type": "integer",
@@ -1251,7 +2107,263 @@
                 ],
                 "responses": {
                     "200": {
-                        "description": "Follow alterado com sucesso"
+                        "description": "Follow alterado com sucesso",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "data": {
+                                            "properties": {
+                                                "status": {
+                                                    "type": "string",
+                                                    "enum": [
+                                                        "followed",
+                                                        "unfollowed",
+                                                        "requested",
+                                                        "cancelled"
+                                                    ],
+                                                    "example": "followed"
+                                                }
+                                            },
+                                            "type": "object"
+                                        },
+                                        "message": {
+                                            "type": "string"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/users/pending-followers": {
+            "get": {
+                "tags": [
+                    "Usuários"
+                ],
+                "summary": "Listar solicitações de follow pendentes",
+                "operationId": "689e4d779c650bfc84ea44dc223df1c6",
+                "responses": {
+                    "200": {
+                        "description": "Lista paginada de solicitações pendentes",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/components/schemas/User"
+                                            }
+                                        },
+                                        "message": {
+                                            "type": "string"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/users/accept-follower/{user}": {
+            "post": {
+                "tags": [
+                    "Usuários"
+                ],
+                "summary": "Aceitar solicitação de follow",
+                "operationId": "eb77099ca90618e1f65d9dc0fec14a35",
+                "parameters": [
+                    {
+                        "name": "user",
+                        "in": "path",
+                        "description": "ID do usuário solicitante",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Solicitação aceita"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/users/reject-follower/{user}": {
+            "post": {
+                "tags": [
+                    "Usuários"
+                ],
+                "summary": "Rejeitar solicitação de follow",
+                "operationId": "e94cfa492c9183d91f2e76f28c2d6702",
+                "parameters": [
+                    {
+                        "name": "user",
+                        "in": "path",
+                        "description": "ID do usuário solicitante",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Solicitação rejeitada"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/users/block/{user}": {
+            "post": {
+                "tags": [
+                    "Usuários"
+                ],
+                "summary": "Bloquear usuário",
+                "operationId": "e7403a68afa76eb4415aeb3bd01d5398",
+                "parameters": [
+                    {
+                        "name": "user",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Usuário bloqueado"
+                    },
+                    "422": {
+                        "description": "Não pode bloquear a si mesmo"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/users/unblock/{user}": {
+            "post": {
+                "tags": [
+                    "Usuários"
+                ],
+                "summary": "Desbloquear usuário",
+                "operationId": "4b76f6f6ab2932e6ff29ba5e568ced2f",
+                "parameters": [
+                    {
+                        "name": "user",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Usuário desbloqueado"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/users/blocked": {
+            "get": {
+                "tags": [
+                    "Usuários"
+                ],
+                "summary": "Listar usuários bloqueados",
+                "operationId": "9e720fed89fc866c4e33ea1140b14657",
+                "responses": {
+                    "200": {
+                        "description": "Lista paginada de usuários bloqueados",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/components/schemas/User"
+                                            }
+                                        },
+                                        "message": {
+                                            "type": "string"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/users/delete-account": {
+            "delete": {
+                "tags": [
+                    "Usuários"
+                ],
+                "summary": "Excluir conta do usuário autenticado (soft delete, recuperável em até 60 dias)",
+                "operationId": "4b97c80425fa9cdafff1f376f35a0a4f",
+                "responses": {
+                    "200": {
+                        "description": "Conta excluída com sucesso"
+                    },
+                    "401": {
+                        "description": "Não autenticado"
                     }
                 },
                 "security": [
@@ -1309,9 +2421,19 @@
                         "type": "string",
                         "example": "Hayssa Gomes"
                     },
-                    "email": {
+                    "username": {
                         "type": "string",
-                        "example": "hayssa@email.com"
+                        "example": "hayssa.gomes"
+                    },
+                    "description": {
+                        "type": "string",
+                        "maxLength": 200,
+                        "example": "Eletricista profissional com 10 anos de experiência",
+                        "nullable": true
+                    },
+                    "is_private": {
+                        "type": "boolean",
+                        "example": false
                     },
                     "avatar": {
                         "oneOf": [
@@ -1336,6 +2458,77 @@
                     "following_count": {
                         "type": "integer",
                         "example": 8
+                    },
+                    "average_rating": {
+                        "description": "Média de estrelas (sempre visível, mesmo em perfis privados)",
+                        "type": "number",
+                        "format": "float",
+                        "example": 4.5,
+                        "nullable": true
+                    },
+                    "reviews_count": {
+                        "type": "integer",
+                        "example": 10
+                    },
+                    "is_online": {
+                        "description": "Usuário online nos últimos 5 minutos",
+                        "type": "boolean",
+                        "example": true
+                    },
+                    "is_following": {
+                        "type": "boolean",
+                        "example": false
+                    },
+                    "is_pending": {
+                        "type": "boolean",
+                        "example": false
+                    },
+                    "is_blocked": {
+                        "description": "Se o usuário autenticado bloqueou este usuário",
+                        "type": "boolean",
+                        "example": false
+                    },
+                    "last_seen_at": {
+                        "description": "Visível apenas para perfis públicos, seguidores ou o próprio usuário",
+                        "type": "string",
+                        "format": "date-time",
+                        "nullable": true
+                    },
+                    "email": {
+                        "description": "Visível apenas para perfis públicos, seguidores ou o próprio usuário",
+                        "type": "string",
+                        "example": "hayssa@email.com"
+                    },
+                    "phone": {
+                        "description": "Visível apenas para perfis públicos, seguidores ou o próprio usuário",
+                        "type": "string",
+                        "example": "(11) 99999-1234",
+                        "nullable": true
+                    },
+                    "city": {
+                        "description": "Visível apenas para perfis públicos, seguidores ou o próprio usuário",
+                        "properties": {
+                            "id": {
+                                "type": "integer",
+                                "example": 1
+                            },
+                            "name": {
+                                "type": "string",
+                                "example": "São Paulo"
+                            }
+                        },
+                        "type": "object"
+                    },
+                    "categories": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/Category"
+                        }
+                    },
+                    "created_at": {
+                        "description": "Visível apenas para perfis públicos, seguidores ou o próprio usuário",
+                        "type": "string",
+                        "format": "date-time"
                     }
                 },
                 "type": "object"
@@ -1394,6 +2587,13 @@
                             "$ref": "#/components/schemas/PublicationMedia"
                         }
                     },
+                    "mentions": {
+                        "description": "Usuários mencionados via @username no texto",
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/User"
+                        }
+                    },
                     "comments": {
                         "type": "array",
                         "items": {
@@ -1430,6 +2630,12 @@
                         "type": "string",
                         "example": "Ótimo serviço!"
                     },
+                    "parent_id": {
+                        "description": "ID do comentário pai (null = comentário raiz)",
+                        "type": "integer",
+                        "example": null,
+                        "nullable": true
+                    },
                     "author": {
                         "$ref": "#/components/schemas/User"
                     },
@@ -1437,6 +2643,13 @@
                         "type": "array",
                         "items": {
                             "$ref": "#/components/schemas/PublicationMedia"
+                        }
+                    },
+                    "replies": {
+                        "description": "Respostas ao comentário",
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/Comment"
                         }
                     },
                     "created_at": {
@@ -1522,6 +2735,160 @@
                     }
                 },
                 "type": "object"
+            },
+            "Notification": {
+                "title": "Notification",
+                "properties": {
+                    "id": {
+                        "type": "integer",
+                        "example": 1
+                    },
+                    "type": {
+                        "type": "string",
+                        "enum": [
+                            "like",
+                            "comment",
+                            "follow",
+                            "follow_request",
+                            "mention",
+                            "review",
+                            "review_reply",
+                            "comment_reply",
+                            "message"
+                        ],
+                        "example": "like"
+                    },
+                    "sender": {
+                        "$ref": "#/components/schemas/User"
+                    },
+                    "publication": {
+                        "oneOf": [
+                            {
+                                "$ref": "#/components/schemas/Publication"
+                            }
+                        ],
+                        "nullable": true,
+                        "description": "Null para notificações do tipo follow"
+                    },
+                    "read_at": {
+                        "type": "string",
+                        "format": "date-time",
+                        "nullable": true
+                    },
+                    "created_at": {
+                        "type": "string",
+                        "format": "date-time"
+                    }
+                },
+                "type": "object"
+            },
+            "Review": {
+                "title": "Review",
+                "properties": {
+                    "id": {
+                        "type": "integer",
+                        "example": 1
+                    },
+                    "stars": {
+                        "description": "1-5 estrelas (null em replies)",
+                        "type": "integer",
+                        "example": 5,
+                        "nullable": true
+                    },
+                    "comment": {
+                        "type": "string",
+                        "example": "Excelente profissional!"
+                    },
+                    "reviewer": {
+                        "$ref": "#/components/schemas/User"
+                    },
+                    "media": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/PublicationMedia"
+                        }
+                    },
+                    "replies": {
+                        "description": "Respostas à avaliação",
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/Review"
+                        }
+                    },
+                    "created_at": {
+                        "type": "string",
+                        "format": "date-time"
+                    }
+                },
+                "type": "object"
+            },
+            "Conversation": {
+                "title": "Conversation",
+                "properties": {
+                    "id": {
+                        "type": "integer",
+                        "example": 1
+                    },
+                    "other_user": {
+                        "$ref": "#/components/schemas/User"
+                    },
+                    "latest_message": {
+                        "oneOf": [
+                            {
+                                "$ref": "#/components/schemas/Message"
+                            }
+                        ],
+                        "nullable": true
+                    },
+                    "unread_count": {
+                        "type": "integer",
+                        "example": 3
+                    },
+                    "created_at": {
+                        "type": "string",
+                        "format": "date-time"
+                    },
+                    "updated_at": {
+                        "type": "string",
+                        "format": "date-time"
+                    }
+                },
+                "type": "object"
+            },
+            "Message": {
+                "title": "Message",
+                "properties": {
+                    "id": {
+                        "type": "integer",
+                        "example": 1
+                    },
+                    "body": {
+                        "type": "string",
+                        "example": "Olá, tudo bem?"
+                    },
+                    "sender": {
+                        "$ref": "#/components/schemas/User"
+                    },
+                    "reply_to": {
+                        "oneOf": [
+                            {
+                                "$ref": "#/components/schemas/Message"
+                            }
+                        ],
+                        "nullable": true,
+                        "description": "Mensagem sendo respondida"
+                    },
+                    "read_at": {
+                        "type": "string",
+                        "format": "date-time",
+                        "nullable": true
+                    },
+                    "created_at": {
+                        "type": "string",
+                        "format": "date-time"
+                    }
+                },
+                "type": "object"
             }
         },
         "securitySchemes": {
@@ -1543,12 +2910,24 @@
             "description": "Categories"
         },
         {
+            "name": "Chat",
+            "description": "Chat"
+        },
+        {
             "name": "Coleções",
             "description": "Coleções"
         },
         {
+            "name": "Notificações",
+            "description": "Notificações"
+        },
+        {
             "name": "Publicações",
             "description": "Publicações"
+        },
+        {
+            "name": "Avaliações",
+            "description": "Avaliações"
         },
         {
             "name": "Usuários",

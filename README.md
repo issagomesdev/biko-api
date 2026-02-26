@@ -234,11 +234,21 @@ cp .env.example .env
 # Build and start all containers
 docker compose up -d --build
 
+# Install dependencies
+docker compose exec app composer install
+
+# Fix storage permissions
+docker compose exec app chmod -R 775 storage bootstrap/cache
+docker compose exec app chown -R www-data:www-data storage bootstrap/cache
+
 # Generate application key
 docker compose exec app php artisan key:generate
 
 # Run migrations and seeders
 docker compose exec app php artisan migrate:fresh --seed
+
+# Generate API documentation
+docker compose exec app php artisan l5-swagger:generate
 ```
 
 The API will be available at `http://localhost:8000`

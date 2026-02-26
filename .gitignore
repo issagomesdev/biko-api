@@ -7,6 +7,7 @@
 /vendor
 /storage/api-docs/api-docs.json
 .env
+docker-compose.override.yml
 /.history
 .env.backup
 .env.production

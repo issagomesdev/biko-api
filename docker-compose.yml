@@ -1,17 +1,17 @@
 version: "3.9"
 
 services:
-app:
-  build: .
-  container_name: biko_app
-  restart: unless-stopped
-  working_dir: /var/www
-  volumes:
-    - ./:/var/www
-  ports:
-    - "9000:9000"
-  networks:
-    - biko
+  app:
+    build: .
+    container_name: biko_app
+    restart: unless-stopped
+    working_dir: /var/www
+    volumes:
+      - ./:/var/www
+    ports:
+      - "9000:9000"
+    networks:
+      - biko
       
   db:
     image: mysql:8.4

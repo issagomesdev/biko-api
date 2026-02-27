@@ -1,5 +1,3 @@
-version: "3.9"
-
 services:
   app:
     build: .
@@ -12,7 +10,7 @@ services:
       - "9000:9000"
     networks:
       - biko
-      
+
   db:
     image: mysql:8.4
     container_name: biko_db
@@ -28,15 +26,18 @@ services:
       - biko
 
   phpmyadmin:
-  image: phpmyadmin/phpmyadmin
-  restart: always
-  ports:
-    - "8080:80"
-  environment:
-    PMA_HOST: db
-    PMA_PORT: 3306
-  depends_on:
-    - db
+    image: phpmyadmin/phpmyadmin
+    container_name: biko_phpmyadmin
+    restart: always
+    ports:
+      - "8080:80"
+    environment:
+      PMA_HOST: db
+      PMA_PORT: 3306
+    depends_on:
+      - db
+    networks:
+      - biko
 
 networks:
   biko:

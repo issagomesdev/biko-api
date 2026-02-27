@@ -247,6 +247,9 @@ docker compose exec app php artisan key:generate
 # Run migrations and seeders
 docker compose exec app php artisan migrate:fresh --seed
 
+# Create storage symlink
+docker compose exec app php artisan storage:link
+
 # Generate API documentation
 docker compose exec app php artisan l5-swagger:generate
 ```

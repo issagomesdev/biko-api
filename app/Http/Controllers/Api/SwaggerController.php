@@ -24,6 +24,22 @@ namespace App\Http\Controllers\Api;
  *         )
  *     )
  * )
+ *
+ * @OA\Schema(
+ *     schema="State",
+ *     type="object",
+ *     @OA\Property(property="id", type="integer", example=1),
+ *     @OA\Property(property="name", type="string", example="São Paulo"),
+ *     @OA\Property(property="uf", type="string", example="SP")
+ * )
+ *
+ * @OA\Schema(
+ *     schema="City",
+ *     type="object",
+ *     @OA\Property(property="id", type="integer", example=1),
+ *     @OA\Property(property="name", type="string", example="Campinas"),
+ *     @OA\Property(property="state_id", type="integer", example=1)
+ * )
  */
 class SwaggerController
 {

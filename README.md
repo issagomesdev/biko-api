@@ -47,6 +47,7 @@ This project was developed as the final assignment for the Laboratory of Innovat
 - Block system (restricts messaging, reviews, and profile visibility)
 - Account deletion with soft delete (recoverable within 60 days via login)
 - Public access to service categories
+- Public access to states and cities (location endpoints)
 - Swagger/OpenAPI documentation
 
 ### 🔄 Planned
@@ -124,6 +125,13 @@ Overview of the main project structure:
 |--------------------------|--------|--------------------------------|
 | `/categories`            | GET    | List all available categories  |
 | `/categories/{category}` | GET    | Get category details           |
+
+### 🗺️ Location
+
+| Route                       | Method | Description                    |
+|-----------------------------|--------|--------------------------------|
+| `/states`                   | GET    | List all states                |
+| `/states/{state}/cities`    | GET    | List cities of a state         |
 
 ### 👤 Users
 
@@ -208,6 +216,8 @@ Overview of the main project structure:
 - `Conversation` — `belongsTo` UserOne, UserTwo · `hasMany` Messages
 - `Message` — `belongsTo` Conversation, Sender · `belongsTo` ReplyTo (self-ref)
 - `Notification` — `belongsTo` User, Sender, Publication
+- `State` — `hasMany` Cities
+- `City` — `belongsTo` State · used by Users and Publications
 - `Category` — `belongsToMany` Users, Publications
 
 <h2 id="getting-started">▶️ Getting Started</h2>
@@ -251,7 +261,7 @@ docker compose exec app php artisan migrate:fresh --seed
 docker compose exec app php artisan storage:link
 
 # Generate API documentation
-docker compose exec app php artisan l5-swagger:generate
+docker compose exec php php artisan l5-swagger:generate
 ```
 
 The API will be available at `http://localhost:8000`

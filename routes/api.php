@@ -4,6 +4,7 @@ use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\CategoryController;
 use App\Http\Controllers\Api\ChatController;
 use App\Http\Controllers\Api\CollectionController;
+use App\Http\Controllers\Api\LocationController;
 use App\Http\Controllers\Api\NotificationController;
 use App\Http\Controllers\Api\PublicationController;
 use App\Http\Controllers\Api\ReviewController;
@@ -13,6 +14,10 @@ use Illuminate\Support\Facades\Route;
 // categories
 Route::get('/categories', [CategoryController::class, 'index']);
 Route::get('/categories/{category}', [CategoryController::class, 'show']);
+
+// location
+Route::get('/states', [LocationController::class, 'states']);
+Route::get('/states/{state}/cities', [LocationController::class, 'cities']);
 
 // auth
 Route::post('register', [AuthController::class, 'register']);

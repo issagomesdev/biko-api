@@ -4,7 +4,7 @@
 ![PHP](https://img.shields.io/badge/php-%23777BB4.svg?style=for-the-badge&logo=php&logoColor=white)
 ![MySQL](https://img.shields.io/badge/mysql-4479A1.svg?style=for-the-badge&logo=mysql&logoColor=white)
 ![Docker](https://img.shields.io/badge/docker-%230db7ed.svg?style=for-the-badge&logo=docker&logoColor=white)
-![Status](https://img.shields.io/badge/status-beta-blue?style=for-the-badge)
+![Status](https://img.shields.io/badge/status-in_development-yellow?style=for-the-badge)
 
 <p align="center">
   <a href="#about">About</a> •

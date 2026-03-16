@@ -14,10 +14,15 @@ class PublicationResource extends JsonResource
             'text' => $this->text,
             'type' => $this->type,
             'author' => new UserResource($this->whenLoaded('author')),
-            'city' => $this->whenLoaded('city', fn () => [
-                'id' => $this->city->id,
-                'name' => $this->city->name,
-            ]),
+            'city' => $this->whenLoaded('city', fn () => $this->city ? [
+                'id'    => $this->city->id,
+                'name'  => $this->city->name,
+                'state' => $this->city->state ? [
+                    'id'   => $this->city->state->id,
+                    'name' => $this->city->state->name,
+                    'uf'   => $this->city->state->uf,
+                ] : null,
+            ] : null),
             'categories' => CategoryResource::collection($this->whenLoaded('categories')),
             'tags' => $this->whenLoaded('tags', fn () => $this->tags->pluck('tag')),
             'media' => PublicationMediaResource::collection($this->whenLoaded('media')),

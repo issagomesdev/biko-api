@@ -45,7 +45,7 @@ class Publication extends Model implements HasMedia
 
     public function city(): BelongsTo
     {
-        return $this->belongsTo(City::class);
+        return $this->belongsTo(City::class)->with('state');
     }
 
     public function tags(): HasMany

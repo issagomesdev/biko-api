@@ -320,7 +320,7 @@ curl -X POST http://localhost:8000/api/login \
 ```
 <h2 id="tests">🧪 Tests</h2>
 
-The project has **144 feature tests** covering all major endpoints and business rules.
+The project has **145 feature tests** covering all major endpoints and business rules.
 
 | Suite                   | Tests | Coverage                                                          |
 |-------------------------|-------|-------------------------------------------------------------------|
@@ -328,7 +328,7 @@ The project has **144 feature tests** covering all major endpoints and business 
 | `UserTest`              | 16    | CRUD, search, filters                                             |
 | `FollowTest`            | 8     | Follow, unfollow, pending, accept, reject                         |
 | `BlockTest`             | 8     | Block, unblock, list, profile restriction                         |
-| `PublicationTest`       | 33    | CRUD, likes, comments, date filters, state filter, `is_liked`, optional auth via Bearer token |
+| `PublicationTest`       | 34    | CRUD, likes, comments, date filters, state filter, `is_liked`, optional auth via Bearer token, `city.state` |
 | `ReviewTest`            | 16    | CRUD, replies, duplicate prevention, block checks                 |
 | `ChatTest`              | 15    | Conversations, messages, mark as read, block checks               |
 | `NotificationTest`      | 7     | List, unread count, mark read, filter by type                     |

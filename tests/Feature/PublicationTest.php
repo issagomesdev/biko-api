@@ -526,6 +526,22 @@ class PublicationTest extends TestCase
         $response->assertForbidden();
     }
 
+    public function test_index_returns_city_with_state(): void
+    {
+        $city = City::whereNotNull('state_id')->first();
+        Publication::factory()->create(['user_id' => $this->user->id, 'city_id' => $city->id]);
+
+        $response = $this->getJson('/api/publications?per_page=100');
+
+        $response->assertOk();
+
+        $found = collect($response->json('data.data'))->first(fn ($p) => $p['city']['id'] === $city->id);
+
+        $this->assertNotNull($found);
+        $this->assertArrayHasKey('state', $found['city']);
+        $this->assertArrayHasKey('uf', $found['city']['state']);
+    }
+
     // ── is_liked ──────────────────────────────────────────────
 
     public function test_index_returns_is_liked_false_for_guest(): void

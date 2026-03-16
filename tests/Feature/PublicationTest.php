@@ -241,11 +241,22 @@ class PublicationTest extends TestCase
         $response->assertNotFound();
     }
 
-    public function test_show_requires_auth(): void
+    public function test_show_accessible_without_auth_for_public_profile(): void
     {
         $response = $this->getJson("/api/publications/{$this->publication->id}");
 
-        $response->assertUnauthorized();
+        $response->assertOk()
+            ->assertJson(['data' => ['id' => $this->publication->id]]);
+    }
+
+    public function test_show_returns_404_for_private_profile_without_auth(): void
+    {
+        $privateUser = User::factory()->create(['is_private' => true]);
+        $privatePub  = Publication::factory()->create(['user_id' => $privateUser->id]);
+
+        $response = $this->getJson("/api/publications/{$privatePub->id}");
+
+        $response->assertNotFound();
     }
 
     // ── Store ─────────────────────────────────────────────────
@@ -513,5 +524,112 @@ class PublicationTest extends TestCase
             ->deleteJson("/api/publications/comment/{$comment->id}");
 
         $response->assertForbidden();
+    }
+
+    // ── is_liked ──────────────────────────────────────────────
+
+    public function test_index_returns_is_liked_false_for_guest(): void
+    {
+        $response = $this->getJson('/api/publications?per_page=1');
+
+        $response->assertOk();
+
+        $first = collect($response->json('data.data'))->first();
+        $this->assertFalse($first['is_liked']);
+    }
+
+    public function test_index_returns_is_liked_false_when_not_liked(): void
+    {
+        $response = $this->actingAs($this->user)
+            ->getJson("/api/publications?per_page=100");
+
+        $response->assertOk();
+
+        $found = collect($response->json('data.data'))
+            ->firstWhere('id', $this->publication->id);
+
+        $this->assertNotNull($found);
+        $this->assertFalse($found['is_liked']);
+    }
+
+    public function test_index_returns_is_liked_true_when_liked(): void
+    {
+        $this->actingAs($this->user)
+            ->postJson("/api/publications/like/{$this->publication->id}");
+
+        $response = $this->actingAs($this->user)
+            ->getJson("/api/publications?per_page=100");
+
+        $response->assertOk();
+
+        $found = collect($response->json('data.data'))
+            ->firstWhere('id', $this->publication->id);
+
+        $this->assertNotNull($found);
+        $this->assertTrue($found['is_liked']);
+    }
+
+    public function test_show_returns_is_liked_false_when_not_liked(): void
+    {
+        $response = $this->actingAs($this->user)
+            ->getJson("/api/publications/{$this->publication->id}");
+
+        $response->assertOk();
+        $this->assertFalse($response->json('data.is_liked'));
+    }
+
+    public function test_show_returns_is_liked_true_when_liked(): void
+    {
+        $this->actingAs($this->user)
+            ->postJson("/api/publications/like/{$this->publication->id}");
+
+        $response = $this->actingAs($this->user)
+            ->getJson("/api/publications/{$this->publication->id}");
+
+        $response->assertOk();
+        $this->assertTrue($response->json('data.is_liked'));
+    }
+
+    public function test_index_returns_is_liked_true_via_bearer_token(): void
+    {
+        $token = $this->user->createToken('test')->plainTextToken;
+
+        $this->postJson(
+            "/api/publications/like/{$this->publication->id}",
+            [],
+            ['Authorization' => "Bearer {$token}"]
+        );
+
+        $response = $this->getJson(
+            "/api/publications?per_page=100",
+            ['Authorization' => "Bearer {$token}"]
+        );
+
+        $response->assertOk();
+
+        $found = collect($response->json('data.data'))
+            ->firstWhere('id', $this->publication->id);
+
+        $this->assertNotNull($found);
+        $this->assertTrue($found['is_liked']);
+    }
+
+    // ── Filtro por estado ─────────────────────────────────────
+
+    public function test_index_filters_by_state(): void
+    {
+        $cityInState  = City::whereNotNull('state_id')->first();
+        $cityOther    = City::where('state_id', '!=', $cityInState->state_id)->first();
+
+        $inside  = Publication::factory()->create(['user_id' => $this->user->id, 'city_id' => $cityInState->id]);
+        $outside = Publication::factory()->create(['user_id' => $this->user->id, 'city_id' => $cityOther->id]);
+
+        $response = $this->getJson("/api/publications?state_id={$cityInState->state_id}&per_page=100");
+
+        $response->assertOk();
+
+        $ids = collect($response->json('data.data'))->pluck('id');
+        $this->assertTrue($ids->contains($inside->id));
+        $this->assertFalse($ids->contains($outside->id));
     }
 }

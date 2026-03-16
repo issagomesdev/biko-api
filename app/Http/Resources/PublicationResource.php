@@ -23,6 +23,7 @@ class PublicationResource extends JsonResource
             'media' => PublicationMediaResource::collection($this->whenLoaded('media')),
             'mentions' => UserResource::collection($this->whenLoaded('mentions')),
             'comments' => CommentResource::collection($this->whenLoaded('comments')),
+            'is_liked'     => (bool) ($this->is_liked ?? false),
             'likes_count' => $this->whenCounted('likes'),
             'comments_count' => $this->whenCounted('comments'),
             'created_at' => $this->created_at->toISOString(),

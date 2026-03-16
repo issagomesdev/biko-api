@@ -22,7 +22,9 @@ class PublicationController extends BaseController
      * @OA\Get(
      *     path="/publications",
      *     summary="Listar e filtrar publicações",
+     *     description="Rota pública. Quando um Bearer token válido é enviado, o campo `is_liked` reflete se o usuário autenticado curtiu cada publicação.",
      *     tags={"Publicações"},
+     *     security={{"bearerAuth": {}}, {}},
      *
      *     @OA\Parameter(name="search", in="query", required=false, @OA\Schema(type="string"), example="eletricista São Paulo", description="Pesquisa por texto, tags, categoria, cidade ou estado"),
      *     @OA\Parameter(name="type", in="query", required=false, @OA\Schema(type="integer", enum={0, 1}), example=0),
@@ -126,7 +128,7 @@ class PublicationController extends BaseController
     {
         $this->service->assertCanView($publication, request()->user());
 
-        $publication = $this->service->findWithRelations($publication);
+        $publication = $this->service->findWithRelations($publication, request()->user()?->id);
 
         return $this->sendResponse(
             new PublicationResource($publication),

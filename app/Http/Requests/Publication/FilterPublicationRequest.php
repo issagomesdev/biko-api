@@ -18,6 +18,7 @@ class FilterPublicationRequest extends FormRequest
             'type' => ['nullable', 'integer', 'in:0,1'],
             'categories' => ['nullable', 'array'],
             'categories.*' => ['integer', 'exists:categories,id'],
+            'state_id' => ['nullable', 'integer', 'exists:states,id'],
             'city_id' => ['nullable', 'integer', 'exists:cities,id'],
             'tags' => ['nullable', 'array'],
             'tags.*' => ['string', 'max:100'],

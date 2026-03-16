@@ -16,6 +16,9 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->appendToGroup('api', [
             \App\Http\Middleware\UpdateLastSeen::class,
         ]);
+        $middleware->alias([
+            'optional.auth' => \App\Http\Middleware\OptionalAuth::class,
+        ]);
     })
     ->withExceptions(function (Exceptions $exceptions) {
         //

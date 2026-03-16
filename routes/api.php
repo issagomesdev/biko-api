@@ -26,8 +26,11 @@ Route::post('login', [AuthController::class, 'login']);
 Route::post('logout', [AuthController::class, 'logout'])
     ->middleware('auth:sanctum');
 
-// publications (public)
-Route::get('publications', [PublicationController::class, 'index']);
+// publications (public, with optional auth for is_liked / privacy check)
+Route::get('publications', [PublicationController::class, 'index'])
+    ->middleware('optional.auth');
+Route::get('publications/{publication}', [PublicationController::class, 'show'])
+    ->middleware('optional.auth');
 
 Route::middleware('auth:sanctum')->group(function () {
     // users
@@ -79,6 +82,6 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('publications/comment/{publication}', [PublicationController::class, 'comment']);
     Route::delete('publications/comment/{comment}', [PublicationController::class, 'deleteComment']);
     Route::apiResource('publications', PublicationController::class)->except([
-        'index',
+        'index', 'show',
     ]);
 });

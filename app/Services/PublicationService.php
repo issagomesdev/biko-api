@@ -48,7 +48,11 @@ class PublicationService
             ->ofType(isset($filters['type']) ? (int) $filters['type'] : null)
             ->inCategories($filters['categories'] ?? null)
             ->inCity(isset($filters['city_id']) ? (int) $filters['city_id'] : null)
-            ->withTags($filters['tags'] ?? null);
+            ->when(isset($filters['state_id']), fn ($q) => $q->whereHas('city', fn ($c) => $c->where('state_id', (int) $filters['state_id'])))
+            ->withTags($filters['tags'] ?? null)
+            ->when($authUserId, fn ($q) => $q->withExists([
+                'likes as is_liked' => fn ($lq) => $lq->where('user_id', $authUserId),
+            ]));
 
         $this->applyPrivacyFilter($query, $authUserId);
         $this->applyDateFilter($query, $filters);
@@ -57,8 +61,14 @@ class PublicationService
         return $query->paginate($filters['per_page'] ?? 20);
     }
 
-    public function findWithRelations(Publication $publication): Publication
+    public function findWithRelations(Publication $publication, ?int $authUserId = null): Publication
     {
+        if ($authUserId) {
+            $publication->loadExists([
+                'likes as is_liked' => fn ($q) => $q->where('user_id', $authUserId),
+            ]);
+        }
+
         return $publication->load([
             'author' => fn ($q) => $q->withCount(['followers', 'following']),
             'categories',

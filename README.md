@@ -39,6 +39,8 @@ This project was developed as the final assignment for the Laboratory of Innovat
 - User management with filtering by category and location
 - Follow system with privacy control (public/private profiles, pending requests)
 - CRUD for publications with media attachments (images/videos)
+- `is_liked` field on publication responses — resolved via SQL `EXISTS` subquery (zero N+1) for authenticated users, `false` for guests
+- Filter publications by `state_id` (cascades to cities within the state)
 - Like, comment and reply system
 - Service review and rating system with media support
 - Real-time chat with WebSocket (Laravel Reverb)
@@ -154,7 +156,7 @@ Overview of the main project structure:
 
 | Route                                | Method | Description                          |
 |--------------------------------------|--------|--------------------------------------|
-| `/publications`                      | GET    | List and filter publications         |
+| `/publications`                      | GET    | List and filter publications (optional auth — sends `is_liked` when token present) |
 | `/publications`                      | POST   | Create publication                   |
 | `/publications/{id}`                 | GET    | Show publication                     |
 | `/publications/{id}`                 | PUT    | Update publication                   |
@@ -261,7 +263,7 @@ docker compose exec app php artisan migrate:fresh --seed
 docker compose exec app php artisan storage:link
 
 # Generate API documentation
-docker compose exec php php artisan l5-swagger:generate
+docker compose exec app php artisan l5-swagger:generate
 ```
 
 The API will be available at `http://localhost:8000`
@@ -318,20 +320,20 @@ curl -X POST http://localhost:8000/api/login \
 ```
 <h2 id="tests">🧪 Tests</h2>
 
-The project has **137 feature tests** covering all major endpoints and business rules.
+The project has **144 feature tests** covering all major endpoints and business rules.
 
-| Suite                   | Tests | Coverage                                              |
-|-------------------------|-------|-------------------------------------------------------|
-| `AuthTest`              | 11    | Register, login, logout                               |
-| `UserTest`              | 16    | CRUD, search, filters                                 |
-| `FollowTest`            | 8     | Follow, unfollow, pending, accept, reject             |
-| `BlockTest`             | 8     | Block, unblock, list, profile restriction             |
-| `PublicationTest`       | 26    | CRUD, likes, comments, date filters                   |
-| `ReviewTest`            | 16    | CRUD, replies, duplicate prevention, block checks     |
-| `ChatTest`              | 15    | Conversations, messages, mark as read, block checks   |
-| `NotificationTest`      | 7     | List, unread count, mark read, filter by type         |
-| `CollectionTest`        | 11    | CRUD, toggle publication, default protection          |
-| `AccountDeletionTest`   | 7     | Soft delete, restore via login, 60-day purge          |
+| Suite                   | Tests | Coverage                                                          |
+|-------------------------|-------|-------------------------------------------------------------------|
+| `AuthTest`              | 11    | Register, login, logout                                           |
+| `UserTest`              | 16    | CRUD, search, filters                                             |
+| `FollowTest`            | 8     | Follow, unfollow, pending, accept, reject                         |
+| `BlockTest`             | 8     | Block, unblock, list, profile restriction                         |
+| `PublicationTest`       | 33    | CRUD, likes, comments, date filters, state filter, `is_liked`, optional auth via Bearer token |
+| `ReviewTest`            | 16    | CRUD, replies, duplicate prevention, block checks                 |
+| `ChatTest`              | 15    | Conversations, messages, mark as read, block checks               |
+| `NotificationTest`      | 7     | List, unread count, mark read, filter by type                     |
+| `CollectionTest`        | 11    | CRUD, toggle publication, default protection                      |
+| `AccountDeletionTest`   | 7     | Soft delete, restore via login, 60-day purge                      |
 
 ```bash
 php artisan test

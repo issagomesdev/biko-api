@@ -15,6 +15,7 @@ class OptionalAuth
             $accessToken = PersonalAccessToken::findToken($token);
 
             if ($accessToken && $accessToken->tokenable) {
+                auth()->shouldUse('sanctum');
                 auth()->setUser($accessToken->tokenable);
             }
         }

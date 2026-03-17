@@ -108,7 +108,7 @@ Overview of the main project structure:
  ┣ 📂 factories/             # Model factories for testing
  ┗ 📂 seeders/               # Sample data generators
 
-📂 tests/Feature/            # Feature tests (137 tests)
+📂 tests/Feature/            # Feature tests (150 tests)
 ```
 
 <h2 id="route-structure">📁 Route Structure</h2>
@@ -163,7 +163,9 @@ Overview of the main project structure:
 | `/publications/{id}`                 | DELETE | Delete publication                   |
 | `/publications/{id}/like`            | POST   | Like / unlike                        |
 | `/publications/{id}/comment`         | POST   | Add comment                          |
-| `/publications/{id}/comments/{c}`    | DELETE | Delete comment                       |
+| `/publications/comment/{c}`          | PUT    | Edit comment (owner only)            |
+| `/publications/comment/{c}`          | DELETE | Delete comment (owner only)          |
+| `/publications/comment/{c}/like`     | POST   | Like / unlike comment (toggle)       |
 
 ### ⭐ Reviews
 
@@ -213,7 +215,7 @@ Overview of the main project structure:
 - `User` — `hasMany` Publications, Reviews, Collections · `belongsToMany` Categories, Followers, Blocks
 - `Publication` — `belongsTo` User · `belongsToMany` Categories · `hasMany` Comments, Likes · `hasMedia`
 - `Review` — `belongsTo` User, Reviewer · `hasMany` Replies (self-ref) · `hasMedia`
-- `Comment` — `belongsTo` User, Publication · `hasMany` Replies (self-ref) · `hasMedia`
+- `Comment` — `belongsTo` User, Publication · `hasMany` Replies (self-ref) · `belongsToMany` Users (comment_likes) · `hasMedia`
 - `Collection` — `belongsTo` User · `belongsToMany` Publications
 - `Conversation` — `belongsTo` UserOne, UserTwo · `hasMany` Messages
 - `Message` — `belongsTo` Conversation, Sender · `belongsTo` ReplyTo (self-ref)
@@ -328,7 +330,7 @@ The project has **145 feature tests** covering all major endpoints and business 
 | `UserTest`              | 16    | CRUD, search, filters                                             |
 | `FollowTest`            | 8     | Follow, unfollow, pending, accept, reject                         |
 | `BlockTest`             | 8     | Block, unblock, list, profile restriction                         |
-| `PublicationTest`       | 34    | CRUD, likes, comments, date filters, state filter, `is_liked`, optional auth via Bearer token, `city.state` |
+| `PublicationTest`       | 45    | CRUD, likes, comments (add/edit/delete + auth + ownership), comment likes, date filters, state filter, `is_liked`, optional `city_id`, `city.state`, author categories |
 | `ReviewTest`            | 16    | CRUD, replies, duplicate prevention, block checks                 |
 | `ChatTest`              | 15    | Conversations, messages, mark as read, block checks               |
 | `NotificationTest`      | 7     | List, unread count, mark read, filter by type                     |

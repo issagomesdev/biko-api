@@ -17,7 +17,7 @@ class StorePublicationRequest extends FormRequest
         return [
             'text' => ['required', 'string', 'min:10', 'max:5000'],
             'type' => ['required', 'integer', 'in:'.Publication::TYPE_CLIENT.','.Publication::TYPE_PROVIDER],
-            'city_id' => ['required', 'integer', 'exists:cities,id'],
+            'city_id' => ['nullable', 'integer', 'exists:cities,id'],
             'categories' => ['nullable', 'array'],
             'categories.*' => ['integer', 'exists:categories,id'],
             'tags' => ['nullable', 'array'],

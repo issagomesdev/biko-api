@@ -4,13 +4,16 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Requests\Comment\DeleteCommentRequest;
 use App\Http\Requests\Comment\StoreCommentRequest;
+use App\Http\Requests\Comment\UpdateCommentRequest;
 use App\Http\Requests\Publication\FilterPublicationRequest;
 use App\Http\Requests\Publication\StorePublicationRequest;
 use App\Http\Requests\Publication\UpdatePublicationRequest;
+use App\Http\Resources\CommentResource;
 use App\Http\Resources\PublicationResource;
 use App\Models\Comment;
 use App\Models\Publication;
 use App\Services\PublicationService;
+use Illuminate\Http\Request;
 
 class PublicationController extends BaseController
 {
@@ -75,11 +78,11 @@ class PublicationController extends BaseController
      *             mediaType="multipart/form-data",
      *
      *             @OA\Schema(
-     *                 required={"text", "type", "city_id"},
+     *                 required={"text", "type"},
      *
      *                 @OA\Property(property="text", type="string", example="Preciso de um eletricista urgente"),
      *                 @OA\Property(property="type", type="integer", example=0),
-     *                 @OA\Property(property="city_id", type="integer", example=1),
+     *                 @OA\Property(property="city_id", type="integer", nullable=true, description="Opcional", example=1),
      *                 @OA\Property(property="categories[]", type="array", @OA\Items(type="integer"), example={1, 3}),
      *                 @OA\Property(property="tags[]", type="array", @OA\Items(type="string"), example={"trabalho braçal", "resultado"}),
      *                 @OA\Property(property="mentions[]", type="array", @OA\Items(type="integer"), description="IDs dos usuários mencionados (além dos @username detectados no texto)", example={1, 5}),
@@ -258,7 +261,7 @@ class PublicationController extends BaseController
      *         )
      *     ),
      *
-     *     @OA\Response(response=200, description="Comentário adicionado"),
+     *     @OA\Response(response=200, description="Comentário adicionado (retorna o novo comentário com author, media, replies, likes_count, is_liked)"),
      *     @OA\Response(response=422, description="Dados inválidos")
      * )
      */
@@ -273,9 +276,47 @@ class PublicationController extends BaseController
         );
 
         return $this->sendResponse(
-            new PublicationResource($publication),
+            new CommentResource($publication),
             'Comentário adicionado com sucesso.'
         );
+    }
+
+    /**
+     * @OA\Put(
+     *     path="/publications/comment/{comment}",
+     *     summary="Editar comentário",
+     *     tags={"Publicações"},
+     *     security={{"bearerAuth":{}}},
+     *
+     *     @OA\Parameter(name="comment", in="path", required=true, @OA\Schema(type="integer")),
+     *
+     *     @OA\RequestBody(
+     *         @OA\MediaType(
+     *             mediaType="multipart/form-data",
+     *             @OA\Schema(
+     *                 required={"comment"},
+     *                 @OA\Property(property="comment", type="string", example="Texto editado do comentário"),
+     *                 @OA\Property(property="media[]", type="array", @OA\Items(type="string", format="binary"), description="Novas mídias a adicionar"),
+     *                 @OA\Property(property="remove_media[]", type="array", @OA\Items(type="integer"), description="IDs das mídias a remover", example={1, 2})
+     *             )
+     *         )
+     *     ),
+     *
+     *     @OA\Response(response=200, description="Comentário atualizado com sucesso"),
+     *     @OA\Response(response=403, description="Não autorizado"),
+     *     @OA\Response(response=404, description="Comentário não encontrado")
+     * )
+     */
+    public function updateComment(UpdateCommentRequest $request, Comment $comment)
+    {
+        $comment = $this->service->updateComment(
+            $comment,
+            $request->validated('comment'),
+            $request->file('media', []),
+            $request->validated('remove_media', []),
+        );
+
+        return $this->sendResponse(new CommentResource($comment), 'Comentário atualizado com sucesso.');
     }
 
     /**
@@ -297,5 +338,24 @@ class PublicationController extends BaseController
         $this->service->deleteComment($comment);
 
         return $this->sendResponse([], 'Comentário deletado com sucesso.');
+    }
+
+    /**
+     * @OA\Post(
+     *     path="/publications/comment/{comment}/like",
+     *     summary="Curtir/descurtir comentário (toggle)",
+     *     tags={"Publicações"},
+     *     security={{"bearerAuth":{}}},
+     *
+     *     @OA\Parameter(name="comment", in="path", required=true, @OA\Schema(type="integer")),
+     *
+     *     @OA\Response(response=200, description="liked | unliked")
+     * )
+     */
+    public function likeComment(Request $request, Comment $comment)
+    {
+        $result = $this->service->likeComment($comment, $request->user()->id);
+
+        return $this->sendResponse($result, 'Ação realizada.');
     }
 }

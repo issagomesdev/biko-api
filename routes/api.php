@@ -80,6 +80,8 @@ Route::middleware('auth:sanctum')->group(function () {
     // publications
     Route::post('publications/like/{publication}', [PublicationController::class, 'like']);
     Route::post('publications/comment/{publication}', [PublicationController::class, 'comment']);
+    Route::post('publications/comment/{comment}/like', [PublicationController::class, 'likeComment']);
+    Route::put('publications/comment/{comment}', [PublicationController::class, 'updateComment']);
     Route::delete('publications/comment/{comment}', [PublicationController::class, 'deleteComment']);
     Route::apiResource('publications', PublicationController::class)->except([
         'index', 'show',

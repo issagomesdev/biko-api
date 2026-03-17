@@ -100,10 +100,15 @@ class UserResource extends JsonResource
         if ($canSeeFullProfile) {
             $data['email'] = $this->email;
             $data['phone'] = $this->phone;
-            $data['city'] = $this->whenLoaded('city', fn () => [
-                'id' => $this->city->id,
-                'name' => $this->city->name,
-            ]);
+            $data['city'] = $this->whenLoaded('city', fn () => $this->city ? [
+                'id'    => $this->city->id,
+                'name'  => $this->city->name,
+                'state' => $this->city->relationLoaded('state') && $this->city->state ? [
+                    'id'   => $this->city->state->id,
+                    'name' => $this->city->state->name,
+                    'uf'   => $this->city->state->uf,
+                ] : null,
+            ] : null);
             $data['last_seen_at'] = $this->last_seen_at?->toISOString();
             $data['created_at'] = $this->created_at->toISOString();
         }

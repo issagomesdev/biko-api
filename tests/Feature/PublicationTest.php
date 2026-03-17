@@ -307,7 +307,8 @@ class PublicationTest extends TestCase
             ->postJson('/api/publications', []);
 
         $response->assertUnprocessable()
-            ->assertJsonValidationErrors(['text', 'type', 'city_id']);
+            ->assertJsonValidationErrors(['text', 'type'])
+            ->assertJsonMissingValidationErrors(['city_id']);
     }
 
     public function test_store_validates_text_min_length(): void
@@ -526,6 +527,85 @@ class PublicationTest extends TestCase
         $response->assertForbidden();
     }
 
+    // ── Update Comment ────────────────────────────────────────
+
+    public function test_update_comment_updates_text(): void
+    {
+        $comment = Comment::factory()->create([
+            'publication_id' => $this->publication->id,
+            'user_id' => $this->user->id,
+            'comment' => 'Texto original do comentário',
+        ]);
+
+        $response = $this->actingAs($this->user)
+            ->putJson("/api/publications/comment/{$comment->id}", [
+                'comment' => 'Texto atualizado do comentário',
+            ]);
+
+        $response->assertOk()
+            ->assertJson([
+                'success' => true,
+                'message' => 'Comentário atualizado com sucesso.',
+            ]);
+
+        $this->assertDatabaseHas('comments', [
+            'id' => $comment->id,
+            'comment' => 'Texto atualizado do comentário',
+        ]);
+    }
+
+    public function test_update_comment_requires_auth(): void
+    {
+        $comment = Comment::factory()->create([
+            'publication_id' => $this->publication->id,
+            'user_id' => $this->user->id,
+        ]);
+
+        $response = $this->putJson("/api/publications/comment/{$comment->id}", [
+            'comment' => 'Texto atualizado',
+        ]);
+
+        $response->assertUnauthorized();
+    }
+
+    public function test_update_comment_forbids_other_user(): void
+    {
+        $comment = Comment::factory()->create([
+            'publication_id' => $this->publication->id,
+            'user_id' => $this->user->id,
+        ]);
+
+        $otherUser = User::factory()->create();
+
+        $response = $this->actingAs($otherUser)
+            ->putJson("/api/publications/comment/{$comment->id}", [
+                'comment' => 'Tentativa não autorizada',
+            ]);
+
+        $response->assertForbidden();
+    }
+
+    public function test_store_creates_publication_without_city(): void
+    {
+        $response = $this->actingAs($this->user)
+            ->postJson('/api/publications', [
+                'text' => 'Publicação sem localização definida',
+                'type' => Publication::TYPE_CLIENT,
+            ]);
+
+        $response->assertOk()
+            ->assertJson([
+                'success' => true,
+                'message' => 'Publicação criada com sucesso.',
+            ]);
+
+        $this->assertDatabaseHas('publications', [
+            'text' => 'Publicação sem localização definida',
+            'user_id' => $this->user->id,
+            'city_id' => null,
+        ]);
+    }
+
     public function test_index_returns_city_with_state(): void
     {
         $city = City::whereNotNull('state_id')->first();
@@ -647,5 +727,70 @@ class PublicationTest extends TestCase
         $ids = collect($response->json('data.data'))->pluck('id');
         $this->assertTrue($ids->contains($inside->id));
         $this->assertFalse($ids->contains($outside->id));
+    }
+
+    // ── Like Comment ─────────────────────────────────────────
+
+    public function test_like_comment_toggles_like(): void
+    {
+        $comment = Comment::factory()->create([
+            'publication_id' => $this->publication->id,
+            'user_id'        => $this->user->id,
+        ]);
+
+        // like
+        $this->actingAs($this->user)
+            ->postJson("/api/publications/comment/{$comment->id}/like")
+            ->assertOk()
+            ->assertJsonPath('data.status', 'liked');
+
+        $this->assertDatabaseHas('comment_likes', [
+            'comment_id' => $comment->id,
+            'user_id'    => $this->user->id,
+        ]);
+
+        // unlike
+        $this->actingAs($this->user)
+            ->postJson("/api/publications/comment/{$comment->id}/like")
+            ->assertOk()
+            ->assertJsonPath('data.status', 'unliked');
+
+        $this->assertDatabaseMissing('comment_likes', [
+            'comment_id' => $comment->id,
+            'user_id'    => $this->user->id,
+        ]);
+    }
+
+    public function test_like_comment_requires_auth(): void
+    {
+        $comment = Comment::factory()->create([
+            'publication_id' => $this->publication->id,
+            'user_id'        => $this->user->id,
+        ]);
+
+        $this->postJson("/api/publications/comment/{$comment->id}/like")
+            ->assertUnauthorized();
+    }
+
+    public function test_show_includes_comment_likes_count(): void
+    {
+        $comment = Comment::factory()->create([
+            'publication_id' => $this->publication->id,
+            'user_id'        => $this->user->id,
+        ]);
+
+        $this->actingAs($this->user)
+            ->postJson("/api/publications/comment/{$comment->id}/like");
+
+        $response = $this->actingAs($this->user)
+            ->getJson("/api/publications/{$this->publication->id}");
+
+        $response->assertOk();
+        $comments = $response->json('data.comments');
+        $found    = collect($comments)->firstWhere('id', $comment->id);
+
+        $this->assertNotNull($found);
+        $this->assertEquals(1, $found['likes_count']);
+        $this->assertTrue($found['is_liked']);
     }
 }

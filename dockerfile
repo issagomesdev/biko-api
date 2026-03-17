@@ -5,12 +5,16 @@ WORKDIR /var/www
 RUN apk add --no-cache \
     curl \
     libpng-dev \
+    libjpeg-turbo-dev \
+    freetype-dev \
+    libwebp-dev \
     libxml2-dev \
     zip \
     unzip \
     oniguruma-dev
 
-RUN docker-php-ext-install pdo pdo_mysql mbstring exif pcntl bcmath gd
+RUN docker-php-ext-configure gd --with-jpeg --with-freetype --with-webp \
+ && docker-php-ext-install pdo pdo_mysql mbstring exif pcntl bcmath gd
 
 RUN echo "memory_limit=512M" > /usr/local/etc/php/conf.d/memory.ini
 

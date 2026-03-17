@@ -18,7 +18,7 @@ class UpdatePublicationRequest extends FormRequest
         return [
             'text' => ['sometimes', 'string', 'min:10', 'max:5000'],
             'type' => ['sometimes', 'integer', 'in:'.Publication::TYPE_CLIENT.','.Publication::TYPE_PROVIDER],
-            'city_id' => ['sometimes', 'integer', 'exists:cities,id'],
+            'city_id' => ['sometimes', 'nullable', 'integer', 'exists:cities,id'],
             'categories' => ['nullable', 'array'],
             'categories.*' => ['integer', 'exists:categories,id'],
             'tags' => ['nullable', 'array'],

@@ -42,7 +42,7 @@ class PublicationService
     {
         $query = Publication::query()
             ->select('publications.*')
-            ->with(['author' => fn ($q) => $q->withCount(['followers', 'following']), 'categories', 'tags', 'city', 'media', 'mentions'])
+            ->with(['author' => fn ($q) => $q->withCount(['followers', 'following'])->with(['categories', 'city.state']), 'categories', 'tags', 'city', 'media', 'mentions'])
             ->withCount('comments', 'likes')
             ->search($filters['search'] ?? null)
             ->ofType(isset($filters['type']) ? (int) $filters['type'] : null)
@@ -69,14 +69,35 @@ class PublicationService
             ]);
         }
 
-        return $publication->load([
-            'author' => fn ($q) => $q->withCount(['followers', 'following']),
+        $publication->loadCount(['likes', 'comments']);
+
+        $publication->load([
+            'author' => fn ($q) => $q->withCount(['followers', 'following'])->with(['categories', 'city.state']),
             'categories',
-            'comments' => fn ($q) => $q->whereNull('parent_id')->with(['author', 'media', 'replies.author', 'replies.media']),
-            'likes',
+            'city.state',
+            'comments' => fn ($q) => $q
+                ->whereNull('parent_id')
+                ->withCount('likes')
+                ->with([
+                    'author',
+                    'media',
+                    'replies' => fn ($r) => $r->withCount('likes')->with(['author', 'media']),
+                ]),
             'media',
             'mentions',
+            'tags',
         ]);
+
+        if ($authUserId) {
+            $publication->comments->each(function ($comment) use ($authUserId) {
+                $comment->is_liked = $comment->likes()->where('user_id', $authUserId)->exists();
+                $comment->replies->each(function ($reply) use ($authUserId) {
+                    $reply->is_liked = $reply->likes()->where('user_id', $authUserId)->exists();
+                });
+            });
+        }
+
+        return $publication;
     }
 
     public function create(array $data, ?array $categoryIds = null, ?array $tags = null, array $mediaFiles = [], ?array $mentionIds = null): Publication
@@ -145,7 +166,7 @@ class PublicationService
         return true;
     }
 
-    public function addComment(Publication $publication, int $userId, string $comment, array $mediaFiles = [], ?int $parentId = null): Publication
+    public function addComment(Publication $publication, int $userId, string $comment, array $mediaFiles = [], ?int $parentId = null): Comment
     {
         $author = $publication->author ?? $publication->load('author')->author;
         if ($author->hasBlocked($userId) || $author->isBlockedBy($userId)) {
@@ -181,14 +202,47 @@ class PublicationService
             $publication->id,
         );
 
-        return $publication->load([
-            'comments' => fn ($q) => $q->whereNull('parent_id')->with(['author', 'media', 'replies.author', 'replies.media']),
-        ]);
+        $newComment->load(['author', 'media']);
+        $newComment->loadCount('likes');
+        $newComment->setRelation('replies', collect());
+        $newComment->is_liked = false;
+
+        return $newComment;
+    }
+
+    public function updateComment(Comment $comment, string $text, array $mediaFiles = [], array $removeMediaIds = []): Comment
+    {
+        $comment->update(['comment' => $text]);
+
+        foreach ($removeMediaIds as $mediaId) {
+            $comment->getMedia('media')->firstWhere('id', (int) $mediaId)?->delete();
+        }
+
+        foreach ($mediaFiles as $file) {
+            $comment->addMedia($file)->toMediaCollection('media');
+        }
+
+        $comment->load(['author', 'media']);
+        $comment->loadCount('likes');
+        return $comment;
     }
 
     public function deleteComment(Comment $comment): void
     {
         $comment->delete();
+    }
+
+    public function likeComment(Comment $comment, int $userId): array
+    {
+        $existing = $comment->likes()->where('user_id', $userId)->first();
+
+        if ($existing) {
+            $comment->likes()->detach($userId);
+            return ['status' => 'unliked'];
+        }
+
+        $comment->likes()->attach($userId);
+        return ['status' => 'liked'];
     }
 
     private function syncMentions(Publication $publication, ?array $explicitIds = null): void
